@@ -1,0 +1,6 @@
+{
+  "name": "Dazeen Coffee",
+  "description": "Premium caffeine-free coffee powder website. Elegant Indian UI, smooth animations, and sleep-friendly brewing experiences.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
