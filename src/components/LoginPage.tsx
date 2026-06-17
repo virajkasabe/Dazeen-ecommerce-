@@ -352,8 +352,8 @@ export default function LoginPage({
           </h2>
           <p className="text-xs text-coffee-600 max-w-xs mx-auto">
             {currentUser 
-              ? "Track your direct decaf shipments, change custom grinds, or administer global accounts." 
-              : "Access your customizable decaf profile, trace order shipments, or seed master inventory configs."}
+              ? "Track your direct coffee shipments, change custom grinds, or administer global accounts." 
+              : "Access your customizable coffee profile, trace order shipments, or seed master inventory configs."}
           </p>
         </div>
 
@@ -736,7 +736,7 @@ export default function LoginPage({
             Try a caffeine free coffee now
           </h2>
           <p className="text-white/60 font-body font-light text-sm md:text-base max-w-xl mx-auto mb-8">
-            Experience the premium high-altitude chemical-free shanti with Dazeen decaf. Pure taste, zero caffeine crash.
+            Experience the premium high-altitude chemical-free shanti with Dazeen blends. Pure taste, zero caffeine crash.
           </p>
         </motion.div>
 
@@ -751,7 +751,7 @@ export default function LoginPage({
             onClick={onBackToHome}
             className="liquid-glass-strong rounded-full px-6 py-3 text-sm font-medium text-white flex items-center gap-2 hover:bg-white/10 transition-all font-body cursor-pointer"
           >
-            Order Decaf Coffee
+            Order Premium Coffee
             <ArrowUpRight className="h-5 w-5" />
           </button>
           <button 

@@ -442,7 +442,7 @@ export default function CartPage({
         </div>
         <h2 className="text-3xl font-serif font-bold text-coffee-950">Your Cart is Currently Empty</h2>
         <p className="text-coffee-600 mt-2 text-sm max-w-md mx-auto">
-          Explore our boutique water-decaffeinated coffee selections and customize your coffee routine without caffeine interruptions.
+          Explore our boutique high-altitude coffee selections and customize your coffee routine without caffeine interruptions.
         </p>
         <button
           onClick={() => onSetView("main")}

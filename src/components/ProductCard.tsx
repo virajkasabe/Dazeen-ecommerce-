@@ -202,7 +202,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
                 <div className="p-6 sm:p-8 space-y-6">
                   <div>
                     <span className="text-[10px] uppercase font-mono tracking-widest text-accent-darkgold font-bold">
-                      Gourmet Decaf Reserve
+                      Gourmet Coffee Reserve
                     </span>
                     <h2 className="font-serif text-2xl font-bold text-coffee-950 mt-1">
                       {product.name}
@@ -233,7 +233,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
                   {/* Processing profile details */}
                   <div className="p-4 bg-coffee-100/60 rounded-2xl border border-coffee-200/50 space-y-2 text-xs text-coffee-800">
-                    <p><strong>Decaffeination:</strong> {product.process}</p>
+                    <p><strong>Processing Method:</strong> {product.process}</p>
                     <p><strong>Harvest Origin:</strong> {product.origin}</p>
                     <p><strong>Caffeine Concentration:</strong> Less than 0.05% mg</p>
                   </div>

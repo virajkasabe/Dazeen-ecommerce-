@@ -28,7 +28,7 @@ export default function CoffeeCalculator() {
     const caffeinePerCup = caffeineMap[strength];
     const dailyCaffeine = caffeinePerCup * cups;
     
-    // Switch to Dazeen decaf saves 99.9% of that caffeine
+    // Switch to Dazeen craft process saves 99.9% of that caffeine
     const monthlyCaffeineSavedGrams = ((dailyCaffeine * 30) / 1000).toFixed(1);
     const annualCaffeineSavedGrams = ((dailyCaffeine * 365) / 1000).toFixed(1);
 
@@ -166,7 +166,7 @@ export default function CoffeeCalculator() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-accent-gold" />
                 <span className="font-mono text-xs uppercase tracking-widest text-accent-gold font-bold">
-                  Decaf Impact Results
+                  Wellness Impact Results
                 </span>
               </div>
 

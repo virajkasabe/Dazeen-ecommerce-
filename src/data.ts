@@ -3,9 +3,9 @@ import { Product, BrewGuide, UserReview } from "./types";
 export const PRODUCTS: Product[] = [
   {
     id: "dazeen-classic",
-    name: "Classic Velvet Premium Decaf",
+    name: "Classic Velvet Premium Blend",
     tagline: "Rich aroma of roasted hazelnuts and sweet caramel, with absolute zero jitters.",
-    description: "Our signature blend sourced from the shade-grown estates of Chikmagalur. Savor the authentic aroma and bold structure of traditional Indian coffee, decaffeinated cleanly using the non-chemical Natural Water Extraction Method. Perfect for cozy evenings and post-dinner cravings.",
+    description: "Our signature blend sourced from the shade-grown estates of Chikmagalur. Savor the authentic aroma and bold structure of traditional Indian coffee, purified cleanly using the non-chemical Natural Water Extraction Method. Perfect for cozy evenings and post-dinner cravings.",
     price: 449,
     rating: 4.9,
     reviewsCount: 382,
@@ -14,14 +14,14 @@ export const PRODUCTS: Product[] = [
     aromaProfile: ["Vanilla Pod", "Roasted Hazelnut", "Muted Toffeecorn"],
     benefits: ["Zero Sleep Disruption", "100% Stomach Acid-Safe", "Organic Carbon Safe", "Rich Crema Profile"],
     origin: "Chikmagalur Hills, Karnataka",
-    process: "Chemical-Free Mountain Spring Decaffeination, 100% Arabica",
+    process: "Chemical-Free Mountain Spring Extraction, 100% Arabica",
     caffeineCount: "0.0% Caffeine"
   },
   {
     id: "dazeen-dark",
     name: "Midnight Velvet Dark Roast",
     tagline: "Bold, intense blend of smoky dark chocolate and molasses for pure nocturnal comfort.",
-    description: "A dark, heavy-bodied roast designed specifically for espresso heads and milk coffee lovers. Crafted from premium high-altitude beans, decaffeinated through water filtration to retain smoky tones and a heavy molasses body. Satisfies your late-night dark coffee cravings fully.",
+    description: "A dark, heavy-bodied roast designed specifically for espresso heads and milk coffee lovers. Crafted from premium high-altitude beans, purified through water filtration to retain smoky tones and a heavy molasses body. Satisfies your late-night dark coffee cravings fully.",
     price: 479,
     rating: 4.8,
     reviewsCount: 247,
@@ -30,7 +30,7 @@ export const PRODUCTS: Product[] = [
     aromaProfile: ["75% Dark Cocoa", "Charred Oak wood", "Dark Molasses"],
     benefits: ["Zero Heart Palpitations", "Heavy Espresso Crema", "Stands Tall with Milk", "Anxiety-Free Afternoons"],
     origin: "Baba Budangiri Highlands, India",
-    process: "Carbon Dioxide Mountain-Spring Decaf Process, Organic PeaBerry Blend",
+    process: "Carbon Dioxide Mountain-Spring Process, Organic PeaBerry Blend",
     caffeineCount: "0.0% Caffeine"
   },
   {
@@ -53,7 +53,7 @@ export const PRODUCTS: Product[] = [
     id: "dazeen-irish",
     name: "Royal Irish Cream Reserve",
     tagline: "Sweet, buttery Irish whiskey and dense cream vibes, designed for deep royal sleep.",
-    description: "An incredibly decadent blend reminding you of luxurious Irish cream liqueur. Created using liquid-CO2 decaffeination to keep the light, fruity, and floral notes of the Nilgiri beans intact, then glazed with premium natural cream flavoring. It feels like drinking a rich dessert without any sugar spikes or sleep loss.",
+    description: "An incredibly decadent blend reminding you of luxurious Irish cream liqueur. Created using liquid-CO2 extraction to keep the light, fruity, and floral notes of the Nilgiri beans intact, then glazed with premium natural cream flavoring. It feels like drinking a rich dessert without any sugar spikes or sleep loss.",
     price: 529,
     rating: 4.7,
     reviewsCount: 189,
@@ -62,7 +62,7 @@ export const PRODUCTS: Product[] = [
     aromaProfile: ["Irish Liqueur Vibe", "Sweet Butterscotch", "Vanilla Custard"],
     benefits: ["Soothing Sleep Inducer", "Low-Acid Clean Sip", "Zero Artificial Scent", "Ultimate Luxury Aroma"],
     origin: "Biligirirangana Hills (BR Hills), Karnataka",
-    process: "Liquid-CO2 Decaffeination, Micro-Batch Glazing",
+    process: "Liquid-CO2 Extraction, Micro-Batch Glazing",
     caffeineCount: "0.0% Caffeine"
   }
 ];
@@ -125,7 +125,7 @@ export const BREW_GUIDES: BrewGuide[] = [
     grind: "Extra Coarse",
     timeSeconds: 720, // 12 hours represented symbolically
     steps: [
-      "Add 50g of extra-coarse Dazeen decaf to an airtight jar or pitcher.",
+      "Add 50g of extra-coarse Dazeen blend to an airtight jar or pitcher.",
       "Pour 400ml of cold filtered water, stirring to ensure thorough wetting.",
       "Seal the jar tightly and place in the refrigerator for 12 hours.",
       "Strain through a fine-mesh sieve or paper filter to remove sediment.",
@@ -148,7 +148,7 @@ export const REVIEWS: UserReview[] = [
     name: "Priya Sharma",
     rating: 5,
     city: "Mumbai",
-    comment: "Being pregnant, my doctor strictly told me to limit coffee. Most decaf beans in Indian supermarkets taste stale, but Dazeen Classic Velvet was a revelation! Super chocolatey, thick body, and makes amazing iced lattes. Sourcing is brilliant.",
+    comment: "Being pregnant, my doctor strictly told me to limit coffee. Most alternative beans in Indian supermarkets taste stale, but Dazeen Classic Velvet was a revelation! Super chocolatey, thick body, and makes amazing iced lattes. Sourcing is brilliant.",
     date: "28 May 2026"
   },
   {

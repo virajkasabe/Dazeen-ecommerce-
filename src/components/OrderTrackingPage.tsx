@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, MapPin, Calendar, Clock, ShoppingBag, ArrowRight, Truck, Package, HelpCircle, CheckCircle } from "lucide-react";
+import { Search, MapPin, Calendar, Clock, ShoppingBag, ArrowRight, Truck, Package, HelpCircle, CheckCircle, Download, FileText } from "lucide-react";
 import { Product } from "../types";
 
 interface TrackingProps {
@@ -21,7 +21,7 @@ export default function OrderTrackingPage({ currentUser, onOpenLogin }: Tracking
     { label: "Ready", status: "Ready for dispatch", description: "Freshly packaged & sealed in-house", icon: HelpCircle },
     { label: "Shipped", status: "Shipped", description: "In transit via courier partner", icon: Truck },
     { label: "Out for Delivery", status: "Out for delivery", description: "Arriving at your location today", icon: Truck },
-    { label: "Delivered", status: "Delivered", description: "Delivered safely! Savor the decaf", icon: CheckCircle },
+    { label: "Delivered", status: "Delivered", description: "Delivered safely! Savor the aroma", icon: CheckCircle },
   ];
 
   // Load orders for current logged-in user from local storage
@@ -105,6 +105,64 @@ export default function OrderTrackingPage({ currentUser, onOpenLogin }: Tracking
     });
   };
 
+  const handleDownloadInvoice = (order: any) => {
+    if (!order) return;
+    
+    const invoiceContent = `
+============================================================
+                     DAZEEN COFFEE CO.                       
+                   OFFICIAL TAX INVOICE                     
+============================================================
+Order ID        : ${order.id}
+Date Placed     : ${formatTime(order.createdAt)}
+Payment Mode    : Credit Card / UPI / NetBanking
+Order Status    : ${order.status}
+------------------------------------------------------------
+CUSTOMER DETAILS:
+Name            : ${order.fullName}
+Shipping Address: ${order.streetAddress}
+PIN Code        : ${order.pinCode || "Custom"}
+Phone/Mobile    : ${order.phoneNumber}
+------------------------------------------------------------
+ORDERED ITEMS DETAIL:
+------------------------------------------------------------
+${order.items?.map((item: any, idx: number) => {
+  const itemPrice = item.price || item.product.price || 449;
+  const subTotal = itemPrice * item.quantity;
+  return `[${idx + 1}] ${item.product.name}
+    Roast Level: ${item.product.roastLevel}
+    Quantity   : ${item.quantity} Unit(s)
+    Unit Price : ₹${itemPrice}
+    Subtotal   : ₹${subTotal}
+------------------------------------------------------------`;
+}).join("\n")}
+
+SUMMARY OF CHARGES:
+Total Item Qtys : ${order.items?.reduce((s: number, i: any) => s + i.quantity, 0)} Units
+Subtotal        : ₹${order.totalPrice}
+Coupon Discounts: ₹0 (No active vouchers applied)
+IGST (Included) : Estimated 5.0%
+Delivery Fee    : ₹0 (FREE Priority Tracked Shipping)
+------------------------------------------------------------
+Grand Net Total : ₹${order.totalPrice}
+============================================================
+Thank you for choosing India's finest craft coffee beans.
+Savor the rich complex aromas of Chikmagalur, sleep perfectly!
+            Contact: support@dazeen.com | +91 90123 45678
+============================================================
+`;
+
+    const blob = new Blob([invoiceContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Invoice-${order.id}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 space-y-12">
       
@@ -117,7 +175,7 @@ export default function OrderTrackingPage({ currentUser, onOpenLogin }: Tracking
           Live Order Tracking System 📦✈️
         </h2>
         <p className="text-xs text-coffee-600 max-w-md mx-auto">
-          Trace your gourmet decaf packages from the high estates of Chikmagalur to your coffee mug.
+          Trace your gourmet coffee packages from the high estates of Chikmagalur to your coffee mug.
         </p>
       </div>
 
@@ -330,6 +388,20 @@ export default function OrderTrackingPage({ currentUser, onOpenLogin }: Tracking
                       <span>₹{trackedOrder.totalPrice}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Document / Invoice Action Area */}
+                <div className="pt-3 flex flex-col sm:flex-row gap-3 items-center justify-between text-left border-t border-coffee-100">
+                  <div className="text-xs text-coffee-500">
+                    <p className="font-bold flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-accent-darkgold" /> Need an official copy of this receipt?</p>
+                    <p className="text-[10px] text-coffee-400">Contains GST breakdown, courier partner references, & sourcing data.</p>
+                  </div>
+                  <button
+                    onClick={() => handleDownloadInvoice(trackedOrder)}
+                    className="w-full sm:w-auto px-5 py-3 bg-coffee-950 hover:bg-coffee-900 text-[#FAF6F0] text-xs font-mono font-bold rounded-2xl flex items-center justify-center gap-2 shadow-lg hover:shadow-coffee-950/15 cursor-pointer active:scale-95 transition-all duration-200"
+                  >
+                    <Download className="w-4.5 h-4.5 text-accent-gold" /> Download Invoice
+                  </button>
                 </div>
 
               </motion.div>

@@ -72,7 +72,7 @@ export default function BenefitsSection() {
               </h3>
               
               <p className="mt-auto text-[13px] sm:text-[14px] leading-relaxed text-white/70 font-light max-w-[320px]">
-                Unlike regular industrial decaf coffees that are processed with harsh methylene chloride chemical solvents, Dazeen relies entirely on organic active coconut filters and volcanic pure mountain water.
+                Unlike regular industrial methods processed with harsh methylene chloride chemical solvents, Dazeen relies entirely on organic active coconut filters and volcanic pure mountain water.
               </p>
             </div>
           </div>

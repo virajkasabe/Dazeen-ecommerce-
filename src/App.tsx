@@ -71,6 +71,36 @@ export default function App() {
     localStorage.setItem("dazeen_cart_cache_v1", JSON.stringify(cart));
   }, [cart]);
 
+  // Handle live global updates: sync cart item product objects with currently active stateful products
+  useEffect(() => {
+    let changed = false;
+    const syncedCart = cart.map((item) => {
+      const match = products.find((p) => p.id === item.product.id);
+      if (match) {
+        if (
+          match.price !== item.product.price ||
+          match.name !== item.product.name ||
+          match.image !== item.product.image ||
+          match.tagline !== item.product.tagline
+        ) {
+          changed = true;
+          return { ...item, product: match };
+        }
+      }
+      return item;
+    }).filter((item) => {
+      const exists = products.some((p) => p.id === item.product.id);
+      if (!exists) {
+        changed = true;
+      }
+      return exists;
+    });
+
+    if (changed) {
+      setCart(syncedCart);
+    }
+  }, [products]);
+
   // Cart operations
   const handleAddToCart = (product: Product) => {
     setCart((prev) => {
@@ -120,7 +150,7 @@ export default function App() {
   // Monitor screen scrolling to update active Navbar highlight
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ["hero", "blends", "savings-calc", "brew-simulator", "why-decaf"];
+      const sections = ["hero", "blends", "savings-calc", "brew-simulator", "why-dazeen"];
       const scrollPos = window.scrollY + 120;
 
       for (const section of sections) {
@@ -199,7 +229,7 @@ export default function App() {
               onOpenLogin={() => setCurrentView("login")} 
             />
 
-        {/* Dynamic Decaf Products Area */}
+        {/* Dynamic Craft Products Area */}
         <section id="blends" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Header */}
@@ -212,7 +242,7 @@ export default function App() {
                 Explore Dazeen Premium Blends ☕🫙
               </h2>
               <p className="text-coffee-600 text-xs mt-1">
-                Shade-grown, hand-harvested beans, clean water-decaffeinated without hazardous chemistry.
+                Shade-grown, hand-harvested beans, clean pure-water purified without hazardous chemistry.
               </p>
             </div>
 
@@ -254,7 +284,7 @@ export default function App() {
         <BrewSimulator />
 
         {/* Scientific Comparison & Caffeine-Free benefits section */}
-        <div id="why-decaf">
+        <div id="why-dazeen">
           <BenefitsSection />
         </div>
 

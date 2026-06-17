@@ -326,7 +326,7 @@ export default function CartDrawer({
                               Order Pack Ho Raha Hai...
                             </h4>
                             <p className="text-xs text-coffee-600">
-                              Dazeen Decaf packaging is being assembled organically.
+                              Dazeen Coffee packaging is being assembled organically.
                             </p>
                           </div>
                         </div>
@@ -474,14 +474,14 @@ export default function CartDrawer({
 
                       </div>
 
-                      {/* Decaf Community Promise */}
+                      {/* Brand Community Promise */}
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 1.3 }}
                         className="text-[11px] text-coffee-500 text-center italic pt-4 leading-relaxed border-t border-dashed border-coffee-200 mt-2"
                       >
-                        "Dhanyawad! Dazeen decaf protects your deep restful sleep sleep-cycle and avoids caffeine crashes completely."
+                        "Dhanyawad! Dazeen craft coffee protects your deep restful sleep sleep-cycle and avoids caffeine crashes completely."
                       </motion.div>
 
                       {/* Close & Continue exploring button */}

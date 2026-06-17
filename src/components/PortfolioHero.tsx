@@ -63,7 +63,7 @@ export default function PortfolioHero({
   const handleLinkClick = (id: string) => {
     const sectionMap: { [key: string]: string } = {
       Shop: "blends",
-      Sleep: "why-decaf",
+      Sleep: "why-dazeen",
       Brew: "brew-simulator",
       Reviews: "feedback",
     };
@@ -230,7 +230,7 @@ export default function PortfolioHero({
           
           {/* Row A (tagline + CTA link) */}
           <div className="flex items-center justify-between gap-4 border-b border-coffee-900/10 pb-5">
-            {/* Left Tagline representing high-fidelity decaf values */}
+            {/* Left Tagline representing high-fidelity coffee values */}
             <motion.p
               custom={5}
               variants={fadeUpVariant}
@@ -252,7 +252,7 @@ export default function PortfolioHero({
               onClick={() => handleLinkClick("Shop")}
               className="group flex items-center gap-1.5 sm:gap-2.5 text-[#5E0ED7] font-semibold uppercase text-sm sm:text-[16px] md:text-[20px] tracking-widest hover:opacity-90 transition-all cursor-pointer whitespace-nowrap"
             >
-              <span>SHOP DECAF NOW</span>
+              <span>SHOP BLENDS NOW</span>
               <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform stroke-[2.5]" />
             </motion.button>
           </div>
@@ -287,9 +287,9 @@ export default function PortfolioHero({
               </div>
             </motion.div>
 
-            {/* Right: Stacked grand heading: DAZEEN / PURE / DECAF */}
+            {/* Right: Stacked grand heading: DAZEEN / PURE / CRAFT */}
             <div className="flex flex-col items-end text-right leading-[0.88] select-none">
-              {["Dazeen", "Pure", "Decaf"].map((word, wordIdx) => (
+              {["Dazeen", "Pure", "Craft"].map((word, wordIdx) => (
                 <div key={word} className="overflow-hidden">
                   <motion.div
                     initial={{ y: "110%" }}

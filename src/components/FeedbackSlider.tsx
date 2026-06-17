@@ -37,7 +37,7 @@ const testimonials = [
     name: "Dr. Sanchita Sen",
     role: "Cardiologist, Mumbai",
     rating: 5,
-    text: "Many people don't realize how much chemical residue is left in ordinary decaf. Dazeen's process uses only water, preserving the raw coffee flavonoids. Deliciously healthy!",
+    text: "Many people don't realize how much chemical residue is left in ordinary processed beans. Dazeen's process uses only water, preserving the raw coffee flavonoids. Deliciously healthy!",
     gradient: "linear-gradient(137deg, #FF9D3C 0%, #FFE27C 45%, #FF3D77 100%)",
     delay: 0.4
   }

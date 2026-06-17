@@ -18,6 +18,10 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
   const [loading, setLoading] = useState(false);
   const [notif, setNotif] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // For safe deletions to bypass iframe confirm limitations
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [orderToDeleteId, setOrderToDeleteId] = useState<string | null>(null);
+
   // Hero carousel edit form states
   const [slide1Url, setSlide1Url] = useState("");
   const [slide1Bg, setSlide1Bg] = useState("");
@@ -235,42 +239,57 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
     }
   };
 
-  // 5. Delete Order
+  // 5. Delete Order (Opens Custom Confirmation)
   const handleDeleteOrder = async (orderId: string) => {
-    if (!window.confirm(`Are you sure you want to remove Order ${orderId}?`)) return;
+    setOrderToDeleteId(orderId);
+  };
+
+  // Perform actual order deletion
+  const confirmDeleteOrder = async () => {
+    if (!orderToDeleteId) return;
     setLoading(true);
     try {
       const cached = localStorage.getItem("dazeen_placed_orders_v1");
       const parsed = cached ? JSON.parse(cached) : [];
-      const updated = parsed.filter((o: any) => o.id !== orderId);
+      const updated = parsed.filter((o: any) => o.id !== orderToDeleteId);
       localStorage.setItem("dazeen_placed_orders_v1", JSON.stringify(updated));
       setOrders(updated);
 
-      triggerNotif(`Removed Order ${orderId}`);
+      triggerNotif(`Removed Order ${orderToDeleteId}`);
     } catch (error) {
       console.error(error);
       triggerNotif("Failed to remove order from storage.", "error");
     } finally {
       setLoading(false);
+      setOrderToDeleteId(null);
     }
   };
 
-  // 6. Delete Product
+  // 6. Delete Product (Opens Custom Confirmation)
   const handleDeleteProduct = async (pId: string) => {
-    if (!window.confirm(`Are you sure you want to delete coffee id "${pId}"?`)) return;
+    const prod = productsList.find((p) => p.id === pId);
+    if (prod) {
+      setProductToDelete(prod);
+    }
+  };
+
+  // Perform actual product deletion
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete) return;
     setLoading(true);
     try {
-      const remaining = productsList.filter((p) => p.id !== pId);
+      const remaining = productsList.filter((p) => p.id !== productToDelete.id);
       localStorage.setItem("dazeen_products_cache_v1", JSON.stringify(remaining));
       
       setProductsList(remaining);
       if (onProductsUpdated) onProductsUpdated(remaining);
-      triggerNotif(`Deleted product ${pId}`);
+      triggerNotif(`Deleted product ${productToDelete.id}`);
     } catch (error) {
       console.error(error);
       triggerNotif("Failed to delete product.", "error");
     } finally {
       setLoading(false);
+      setProductToDelete(null);
     }
   };
 
@@ -316,7 +335,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
       id: productId,
       name: productName,
       tagline: productTagline || "Finely balanced flavor profiles",
-      description: productDesc || "Freshly decaffeinated with Pure Mountain Water.",
+      description: productDesc || "Freshly purified with Pure Mountain Water.",
       price: Number(productPrice),
       rating: editingProduct ? editingProduct.rating : 4.8,
       reviewsCount: editingProduct ? editingProduct.reviewsCount : 5,
@@ -373,7 +392,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
                 Online Active
               </span>
             </div>
-            <h2 className="text-2xl font-serif font-bold text-coffee-950 mt-1">Dazeen Decaf Portal</h2>
+            <h2 className="text-2xl font-serif font-bold text-coffee-950 mt-1">Dazeen Portal</h2>
             <p className="text-xs text-coffee-500">Logged in as prime manager: <strong className="font-mono text-coffee-800">{currentUser?.email}</strong></p>
           </div>
         </div>
@@ -844,7 +863,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
             >
               <div className="space-y-1">
                 <h3 className="font-serif text-xl font-bold text-coffee-950">
-                  {editingProduct ? "Modify Decaf Blend Details" : "Introduce New Decaf Blend"}
+                  {editingProduct ? "Modify Coffee Blend Details" : "Introduce New Coffee Blend"}
                 </h3>
                 <p className="text-xs text-coffee-500">Specify precise data matching Cloud Firestore schemas.</p>
               </div>
@@ -885,7 +904,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
                     required
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
-                    placeholder="Classic Vanilla Velvet Decaf"
+                    placeholder="Classic Vanilla Velvet Blend"
                     className="w-full px-3.5 py-2.5 bg-[#FAF6F0] rounded-xl border border-coffee-200 outline-none focus:border-accent-gold block"
                   />
                 </div>
@@ -908,7 +927,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
                     rows={3}
                     value={productDesc}
                     onChange={(e) => setProductDesc(e.target.value)}
-                    placeholder="Provide full heritage notes & decaffeination details..."
+                    placeholder="Provide full heritage notes & purification details..."
                     className="w-full px-3.5 py-2.5 bg-[#FAF6F0] rounded-xl border border-coffee-200 outline-none focus:border-accent-gold block text-xs"
                   />
                 </div>
@@ -968,7 +987,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
                   </div>
 
                   <div className="space-y-1.5 col-span-2 sm:col-span-1">
-                    <label className="block text-coffee-900 font-bold uppercase tracking-wider font-mono text-[9px]">Decaffeination Process</label>
+                    <label className="block text-coffee-900 font-bold uppercase tracking-wider font-mono text-[9px]">Aroma Extraction Process</label>
                     <input
                       type="text"
                       value={productProcess}
@@ -998,6 +1017,96 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
                 </div>
 
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Custom state-based modal for product deletion bypasses window.confirm blocks */}
+        {productToDelete && (
+          <div className="fixed inset-0 z-55 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setProductToDelete(null)}
+              className="absolute inset-0 bg-coffee-950/40 backdrop-blur-sm shadow-2xl"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl border border-coffee-200 shadow-2xl p-6 sm:p-8 max-w-sm w-full z-10 text-center space-y-5"
+            >
+              <div className="w-14 h-14 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 mx-auto">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-serif text-lg font-bold text-coffee-950">Delete Coffee Blend?</h4>
+                <p className="text-xs text-coffee-500 leading-relaxed text-left">
+                  Are you sure you want to delete <strong className="text-coffee-900 font-bold">"{productToDelete.name}"</strong>? This will remove it from store listing.
+                </p>
+              </div>
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setProductToDelete(null)}
+                  className="flex-1 py-2.5 bg-[#FAF6F0] hover:bg-coffee-100 border border-coffee-200 rounded-xl text-xs font-bold text-coffee-700 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteProduct}
+                  className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+                >
+                  Yes, Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Custom state-based modal for order deletion bypasses window.confirm blocks */}
+        {orderToDeleteId && (
+          <div className="fixed inset-0 z-55 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOrderToDeleteId(null)}
+              className="absolute inset-0 bg-coffee-950/40 backdrop-blur-sm shadow-2xl"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl border border-coffee-200 shadow-2xl p-6 sm:p-8 max-w-sm w-full z-10 text-center space-y-5"
+            >
+              <div className="w-14 h-14 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 mx-auto">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-serif text-lg font-bold text-coffee-950">Remove Order Shipment?</h4>
+                <p className="text-xs text-coffee-500 leading-relaxed text-left">
+                  Are you sure you want to permanently remove order <strong className="text-coffee-950 font-bold">"{orderToDeleteId}"</strong> from the registry?
+                </p>
+              </div>
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setOrderToDeleteId(null)}
+                  className="flex-1 py-2.5 bg-[#FAF6F0] hover:bg-coffee-100 border border-coffee-200 rounded-xl text-xs font-bold text-coffee-700 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteOrder}
+                  className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold cursor-pointer"
+                >
+                  Yes, Remove
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
