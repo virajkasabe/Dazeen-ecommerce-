@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Star, ShieldAlert, Heart, HelpCircle, Mail, Send, CheckCircle, Sparkles, MapPin, Moon, Award } from "lucide-react";
+import { Star, ShieldAlert, Heart, HelpCircle, Mail, Send, CheckCircle, Sparkles, MapPin, Moon, Award, Bell, X, Coffee } from "lucide-react";
 
 import { Product, CartItem } from "./types";
 import { PRODUCTS, REVIEWS } from "./data";
@@ -21,6 +21,8 @@ import OrderTrackingPage from "./components/OrderTrackingPage";
 import AdminPanel from "./components/AdminPanel";
 import CartPage from "./components/CartPage";
 
+import { notificationService } from "./utils/notifications";
+
 export default function App() {
   // Authentication & View Routing State
   const [currentUser, setCurrentUser] = useState<any>(() => {
@@ -36,6 +38,73 @@ export default function App() {
     const savedProds = localStorage.getItem("dazeen_products_cache_v1");
     return savedProds ? JSON.parse(savedProds) : PRODUCTS;
   });
+
+  // Marketing Notification Permission State
+  const [notifPermission, setNotifPermission] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      return "Notification" in window ? Notification.permission : "denied";
+    }
+    return "default";
+  });
+  const [showPermissionBanner, setShowPermissionBanner] = useState<boolean>(false);
+  const [activeToast, setActiveToast] = useState<{ title: string; body: string } | null>(null);
+
+  useEffect(() => {
+    // Check if user has already made a decision, else prompt with a pretty banner
+    const hasPrompted = localStorage.getItem("dazeen_prompted_push");
+    if (!hasPrompted && notifPermission !== "granted") {
+      const timer = setTimeout(() => {
+        setShowPermissionBanner(true);
+      }, 4000); // show a graceful prompt banner after 4 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [notifPermission]);
+
+  // Listener for Custom backup Toast Events 
+  useEffect(() => {
+    const handleCustomToast = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail) {
+        setActiveToast({
+          title: customEvent.detail.title,
+          body: customEvent.detail.body
+        });
+        // Auto dismiss after 7s
+        const t = setTimeout(() => {
+          setActiveToast(null);
+        }, 7000);
+        return () => clearTimeout(t);
+      }
+    };
+
+    window.addEventListener("dazeen-toast", handleCustomToast);
+    
+    // Automatically start the witty marketing intervals
+    notificationService.startMarketingEngine();
+
+    return () => {
+      window.removeEventListener("dazeen-toast", handleCustomToast);
+      notificationService.stopMarketingEngine();
+    };
+  }, []);
+
+  const handleRequestPush = async () => {
+    localStorage.setItem("dazeen_prompted_push", "true");
+    setShowPermissionBanner(false);
+    
+    const granted = await notificationService.requestPermission();
+    if (granted) {
+      setNotifPermission("granted");
+      notificationService.send("Push Registered Successfully! 📦💖", "You are subscribed to Dazeen updates & our special 1m spicy alerts!");
+    } else {
+      setNotifPermission("denied");
+      // Send fallback inside page to verify it is active
+      setActiveToast({
+        title: "In-App Alerts Enabled! 🔔",
+        body: "Browser alerts are blocked, but you will still receive our premium order updates right here!"
+      });
+    }
+  };
 
   const [heroImages, setHeroImages] = useState<any[]>(() => {
     const saved = localStorage.getItem("dazeen_hero_images_v1");
@@ -366,6 +435,77 @@ export default function App() {
           onClearCart={handleClearCart}
         />
       )}
+
+      {/* Elegant Witty / Spicy Notification Hub in Page */}
+      <AnimatePresence>
+        {activeToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed top-24 right-4 z-50 max-w-sm w-full bg-white/95 backdrop-blur-md rounded-2xl border border-stone-200/50 shadow-xl p-4 flex gap-3 text-left overflow-hidden sm:right-6"
+          >
+            <div className="w-10 h-10 rounded-full bg-stone-900 text-white flex items-center justify-center flex-shrink-0 animate-bounce">
+              <Coffee className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-bold text-stone-900 truncate flex items-center gap-1.5">
+                {activeToast.title} ☕
+              </h4>
+              <p className="text-xs text-stone-600 mt-1 leading-relaxed">
+                {activeToast.body}
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveToast(null)}
+              className="text-stone-400 hover:text-stone-700 p-1 self-start cursor-pointer transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Permission Bar - Pure minimal look */}
+      <AnimatePresence>
+        {showPermissionBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            transition={{ type: "spring", stiffness: 200, damping: 22 }}
+            className="fixed bottom-24 left-4 right-4 z-[9999] max-w-md mx-auto bg-white border border-stone-200 shadow-2xl rounded-2xl p-5 text-left flex flex-col gap-3"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600">
+                <Bell className="w-5 h-5 animate-swing" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-stone-900">Enable Special Alerts?</h4>
+                <p className="text-[11px] text-stone-500">Get order tracking milestones & crazy 1-minute updates!</p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end mt-1">
+              <button
+                onClick={() => {
+                  localStorage.setItem("dazeen_prompted_push", "true");
+                  setShowPermissionBanner(false);
+                }}
+                className="px-3.5 py-1.5 text-xs text-stone-500 hover:text-stone-850 font-bold bg-stone-50 rounded-lg cursor-pointer"
+              >
+                Not Now
+              </button>
+              <button
+                onClick={handleRequestPush}
+                className="px-4 py-1.5 text-xs text-white bg-stone-900 hover:bg-stone-800 rounded-lg cursor-pointer font-black"
+              >
+                Allow Updates
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

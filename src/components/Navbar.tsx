@@ -70,7 +70,7 @@ export default function Navbar({
         initial={{ y: 0, opacity: 1 }}
         animate={{ y: isNavbarVisible ? 0 : -100, opacity: isNavbarVisible ? 1 : 0 }}
         transition={{ type: "spring", stiffness: 220, damping: 25 }}
-        className="sticky top-0 z-50 bg-white/20 backdrop-blur-md border-b border-white/30 shadow-md transition-all duration-300"
+        className="sticky top-0 z-50 bg-transparent transition-all duration-300"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">

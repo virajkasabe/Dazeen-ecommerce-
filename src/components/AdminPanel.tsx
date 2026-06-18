@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { PRODUCTS } from "../data";
 import { Product } from "../types";
 import { Plus, Trash2, Edit2, CheckCircle2, ShieldCheck, RefreshCw, Layers, Layout, Image, PlusCircle, AlertTriangle, Check, ArrowRight } from "lucide-react";
+import { notificationService } from "../utils/notifications";
 
 interface AdminPanelProps {
   currentUser: any;
@@ -231,6 +232,10 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
       setOrders(updated);
 
       triggerNotif(`Updated Order ${order.id} status to ${newStatus}`);
+      notificationService.send(
+        `Order Updated: ${order.id} 📦`,
+        `Your Dazeen coffee package status is now: ${newStatus}. Savor the wait!`
+      );
     } catch (error) {
       console.error(error);
       triggerNotif("Failed to update status on storage.", "error");

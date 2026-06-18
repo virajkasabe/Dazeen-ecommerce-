@@ -5,6 +5,7 @@ import {
   MapPin, Truck, Check, ChevronLeft, AlertCircle, ShoppingBag, Landmark, Home, Briefcase
 } from "lucide-react";
 import { CartItem } from "../types";
+import { notificationService } from "../utils/notifications";
 
 declare global {
   interface Window {
@@ -342,6 +343,12 @@ export default function CartPage({
       const parseExisting = existingOrders ? JSON.parse(existingOrders) : [];
       localStorage.setItem("dazeen_placed_orders_v1", JSON.stringify([orderPayload, ...parseExisting]));
 
+      // Notify user about their fresh coffee order placement
+      notificationService.send(
+        "COD Order Placed successfully! 📦🚚",
+        `Your order ${uniqueOrderId} is logged! Savor the wait, cash of ₹${totals.finalAmount} is payable on delivery.`
+      );
+
       if (currentUser) {
         const updatedUser = {
           ...currentUser,
@@ -411,6 +418,12 @@ export default function CartPage({
       const exists = parseExisting.some((o: any) => o.id === finalOrderId);
       if (!exists) {
         localStorage.setItem("dazeen_placed_orders_v1", JSON.stringify([orderPayload, ...parseExisting]));
+        
+        // Notify user about their fresh coffee order placement
+        notificationService.send(
+          "Order Placed successfully! 🎉☕",
+          `Your order ${finalOrderId} is logged! Savor the wait, we are preparing it freshness-first.`
+        );
       }
 
       // Save user profile details
