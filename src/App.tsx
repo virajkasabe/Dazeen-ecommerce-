@@ -14,6 +14,7 @@ import AboutMe from "./components/AboutMe";
 import FeedbackSlider from "./components/FeedbackSlider";
 import Footer from "./components/Footer";
 
+
 // Local storage-backed offline user and products state
 import LoginPage from "./components/LoginPage";
 import OrderTrackingPage from "./components/OrderTrackingPage";
@@ -187,6 +188,8 @@ export default function App() {
     setNewsletterEmail("");
     setTimeout(() => setIsNewsletterSubmitted(false), 5000);
   };
+
+
 
   const lazyLoadCartDrawer = async () => {
     // Dynamically imported when opened or predefined

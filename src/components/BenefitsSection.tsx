@@ -53,7 +53,7 @@ export default function BenefitsSection() {
             {/* Bottom text region */}
             <div className="flex-1 flex items-center justify-start p-6 sm:p-8 text-left">
               <h3 className="text-white text-xl sm:text-2xl font-light leading-tight">
-                Chikmagalur Heritage &amp;<br />
+                Single-Origin Heritage &amp;<br />
                 Artisanal Quality
               </h3>
             </div>

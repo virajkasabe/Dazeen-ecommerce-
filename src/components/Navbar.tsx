@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ShoppingCart, Sparkles, User, ShieldCheck, Package, Home } from "lucide-react";
 import { CartItem } from "../types";
@@ -27,9 +27,9 @@ export default function Navbar({
 }: NavbarProps) {
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Scroll Shrinking State for the bottom Navigation bar ("agr navigation bar 10 size ka h scroll down krne pr 4 ho jaye aur touch pr vapas 10 ho jaye")
-  const [isShrunk, setIsShrunk] = useState<boolean>(false);
-  const [userExpanded, setUserExpanded] = useState<boolean>(false);
+  // Cool Auto-Hide & Show-on-Scroll-Stop Animation logic
+  const [isNavbarVisible, setIsNavbarVisible] = useState<boolean>(true);
+  const scrollTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -37,28 +37,41 @@ export default function Navbar({
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      if (currentScrollY > 120 && currentScrollY > lastScrollY) {
-        // Scrolling down - shrink bottom bar
-        setIsShrunk(true);
-      } else if (currentScrollY === 0 || currentScrollY < lastScrollY - 10) {
-        // Scrolling up or at top - restore bottom bar
-        setIsShrunk(false);
-        setUserExpanded(false);
+      // If we did scroll or are actively scrolling, hide it
+      if (Math.abs(currentScrollY - lastScrollY) > 5) {
+        setIsNavbarVisible(false);
       }
-      
+
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // Show the bar back with animation once scroll stops
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsNavbarVisible(true);
+      }, 400); // 400ms after the user stops scrolling, it gracefully animates back in
+
       lastScrollY = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
   }, []);
-
-  const shouldCollapse = isShrunk && !userExpanded;
 
   return (
     <>
-      {/* Elegantly Polished Top Header for Branding, Navigation & Utilities */}
-      <header className="sticky top-0 z-50 bg-coffee-50/85 backdrop-blur-md border-b border-coffee-100">
+      {/* Elegantly Polished Top Header - Made 100% pure white glassy & transparent */}
+      <motion.header
+        initial={{ y: 0, opacity: 1 }}
+        animate={{ y: isNavbarVisible ? 0 : -100, opacity: isNavbarVisible ? 1 : 0 }}
+        transition={{ type: "spring", stiffness: 220, damping: 25 }}
+        className="sticky top-0 z-50 bg-white/20 backdrop-blur-md border-b border-white/30 shadow-md transition-all duration-300"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             
@@ -70,10 +83,10 @@ export default function Navbar({
                 onNavigate("hero");
               }}
             >
-              <div className="w-8 h-8 rounded-full border-2 border-[#5E0ED7] flex items-center justify-center shadow-lg shadow-[#5E0ED7]/15">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#5E0ED7]" />
+              <div className="w-8 h-8 rounded-full border-2 border-stone-800/30 flex items-center justify-center shadow-lg shadow-stone-800/5 bg-white/40">
+                <div className="w-2.5 h-2.5 rounded-full bg-stone-800 animate-pulse" />
               </div>
-              <span className="ml-2.5 font-serif font-bold text-coffee-950 text-sm tracking-wide hidden sm:inline-block">Dazeen Coffee</span>
+              <span className="ml-2.5 font-serif font-black text-stone-700 text-sm tracking-wide hidden sm:inline-block">Dazeen Coffee</span>
             </div>
 
             {/* Desktop Navigation Links in the Center (Scroll anchors) */}
@@ -96,8 +109,8 @@ export default function Navbar({
                     }}
                     className={`text-[12px] font-bold tracking-widest uppercase transition-colors cursor-pointer ${
                       active
-                        ? "text-[#5E0ED7]"
-                        : "text-coffee-900 hover:text-[#5E0ED7]"
+                        ? "text-stone-900 underline underline-offset-4 decoration-2 decoration-stone-800 font-extrabold"
+                        : "text-stone-500/80 hover:text-stone-900"
                     }`}
                   >
                     {link.label}
@@ -108,7 +121,7 @@ export default function Navbar({
 
             {/* Quick trust metrics on the right side */}
             <div className="flex items-center gap-2 sm:gap-3 z-50">
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-coffee-100 text-coffee-800 border border-coffee-200 shadow-xs uppercase tracking-wider">
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-stone-800/5 text-stone-600 border border-stone-800/15 shadow-xs uppercase tracking-wider">
                 <Sparkles className="w-3 h-3 text-[#5E0ED7] animate-pulse" />
                 <span>₹ INR Store</span>
               </span>
@@ -116,11 +129,18 @@ export default function Navbar({
 
           </div>
         </div>
-      </header>      {/* Floating Bottom Pill-shaped Navigation Bar - Normal, static size with zero animations */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 select-none max-w-[calc(100vw-32px)]">
+      </motion.header>
+
+      {/* Floating Bottom Pill-shaped Navigation Bar - Glassy Pure White Design */}
+      <motion.div
+        initial={{ y: 0, opacity: 1, x: "-50%" }}
+        animate={{ y: isNavbarVisible ? 0 : 120, opacity: isNavbarVisible ? 1 : 0, x: "-50%" }}
+        transition={{ type: "spring", stiffness: 220, damping: 25 }}
+        className="fixed bottom-6 left-1/2 z-50 select-none max-w-[calc(100vw-32px)]"
+      >
         <div
           style={{ width: "380px" }}
-          className="bg-coffee-950/92 backdrop-blur-xl border border-coffee-800 shadow-2xl shadow-coffee-950/50 rounded-[100px] overflow-hidden p-1.5 max-w-full"
+          className="bg-white/75 backdrop-blur-xl border border-white/40 shadow-2xl shadow-stone-950/5 rounded-[100px] overflow-hidden p-1.5 max-w-full"
         >
           <nav className="flex items-center justify-around">
             
@@ -133,8 +153,8 @@ export default function Navbar({
               }}
               className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer ${
                 currentView === "main"
-                  ? "bg-[#FAF6F0] text-coffee-950 font-extrabold shadow-sm"
-                  : "text-coffee-300 hover:text-white"
+                  ? "bg-white text-stone-950 font-extrabold shadow-sm"
+                  : "text-stone-500 hover:text-stone-900"
               }`}
             >
               <Home className="w-4 h-4 text-inherit" />
@@ -149,8 +169,8 @@ export default function Navbar({
               }}
               className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer ${
                 currentView === "tracking"
-                  ? "bg-accent-gold text-coffee-950 font-extrabold shadow-sm"
-                  : "text-coffee-300 hover:text-white"
+                  ? "bg-white text-stone-950 font-extrabold shadow-sm"
+                  : "text-stone-500 hover:text-stone-900"
               }`}
             >
               <Package className="w-4 h-4 text-inherit" />
@@ -165,14 +185,14 @@ export default function Navbar({
               }}
               className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer relative ${
                 currentView === "cart"
-                  ? "bg-purple-600 text-white font-extrabold shadow-sm"
-                  : "text-coffee-300 hover:text-white"
+                  ? "bg-white text-stone-950 font-extrabold shadow-sm"
+                  : "text-stone-500 hover:text-stone-900"
               }`}
             >
               <ShoppingCart className="w-4 h-4 text-inherit" />
               <span className="text-[9px] font-mono uppercase tracking-wider font-bold">Cart</span>
               {totalItems > 0 && (
-                <span className="absolute top-0.5 right-3 bg-red-500 text-white text-[8px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center font-mono ring-1 ring-coffee-950">
+                <span className="absolute top-0.5 right-3 bg-red-500 text-white text-[8px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center font-mono ring-1 ring-white">
                   {totalItems}
                 </span>
               )}
@@ -186,12 +206,12 @@ export default function Navbar({
               }}
               className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer ${
                 currentView === "login"
-                  ? "bg-[#FAF6F0] text-coffee-950 font-extrabold shadow-sm"
-                  : "text-coffee-300 hover:text-white"
+                  ? "bg-white text-stone-950 font-extrabold shadow-sm"
+                  : "text-stone-500 hover:text-stone-900"
               }`}
             >
               <User className="w-4 h-4 text-inherit" />
-              <span className="text-[9px] font-mono uppercase tracking-wider font-bold max-w-[60px] truncate">
+              <span className="text-[9px] font-mono uppercase tracking-wider font-bold max-w-[60px] truncate block">
                 {currentUser ? currentUser.displayName?.split(" ")[0] || "Profile" : "Profile"}
               </span>
             </button>
@@ -205,8 +225,8 @@ export default function Navbar({
                 }}
                 className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer ${
                   currentView === "admin"
-                    ? "bg-amber-500 text-coffee-950 font-extrabold shadow-sm"
-                    : "text-amber-400 hover:text-amber-350"
+                    ? "bg-amber-400 text-stone-950 font-extrabold shadow-sm"
+                    : "text-stone-500 hover:text-stone-900 font-extrabold"
                 }`}
               >
                 <ShieldCheck className="w-4 h-4 text-inherit" />
@@ -216,7 +236,7 @@ export default function Navbar({
 
           </nav>
         </div>
-      </div>
+      </motion.div>
     </>
   );
 }

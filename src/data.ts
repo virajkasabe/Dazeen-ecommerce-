@@ -5,7 +5,7 @@ export const PRODUCTS: Product[] = [
     id: "dazeen-classic",
     name: "Classic Velvet Premium Blend",
     tagline: "Rich aroma of roasted hazelnuts and sweet caramel, with absolute zero jitters.",
-    description: "Our signature blend sourced from the shade-grown estates of Chikmagalur. Savor the authentic aroma and bold structure of traditional Indian coffee, purified cleanly using the non-chemical Natural Water Extraction Method. Perfect for cozy evenings and post-dinner cravings.",
+    description: "Our signature blend sourced from our shade-grown estates. Savor the authentic aroma and bold structure of traditional Indian coffee, purified cleanly using the non-chemical Natural Water Extraction Method. Perfect for cozy evenings and post-dinner cravings.",
     price: 449,
     rating: 4.9,
     reviewsCount: 382,
@@ -13,7 +13,7 @@ export const PRODUCTS: Product[] = [
     roastLevel: "Medium",
     aromaProfile: ["Vanilla Pod", "Roasted Hazelnut", "Muted Toffeecorn"],
     benefits: ["Zero Sleep Disruption", "100% Stomach Acid-Safe", "Organic Carbon Safe", "Rich Crema Profile"],
-    origin: "Chikmagalur Hills, Karnataka",
+    origin: "Western Ghats, Karnataka",
     process: "Chemical-Free Mountain Spring Extraction, 100% Arabica",
     caffeineCount: "0.0% Caffeine"
   },

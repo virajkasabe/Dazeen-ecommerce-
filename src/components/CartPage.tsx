@@ -136,13 +136,13 @@ export default function CartPage({
   // Quick State/City Autopopulate on Pincode (Indian standard search)
   useEffect(() => {
     if (pincode.length === 6) {
-      // Basic mock database to feel real for Chikmagalur / major hubs
+      // Basic mock database to feel real for major hubs
       const pinPrefix = pincode.substring(0, 3);
       if (pinPrefix === "560" || pinPrefix === "561" || pinPrefix === "562") {
         setCity("Bengaluru");
         setState("Karnataka");
       } else if (pinPrefix === "577" || pinPrefix === "578") {
-        setCity("Chikmagalur");
+        setCity("Coffee Estates Area");
         setState("Karnataka");
       } else if (pinPrefix === "400" || pinPrefix === "401") {
         setCity("Mumbai");
@@ -624,7 +624,7 @@ export default function CartPage({
                 <input
                   id="landmark"
                   type="text"
-                  placeholder="e.g. Near Chikmagalur Post Office"
+                  placeholder="e.g. Near Central Post Office"
                   value={landmark}
                   onChange={(e) => setLandmark(e.target.value)}
                   className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
@@ -949,7 +949,7 @@ export default function CartPage({
             <div className="pt-3 border-t border-coffee-100 text-[10px] font-mono text-coffee-500 space-y-1.5 select-none text-center">
               <div className="flex items-center justify-center gap-1.5 text-coffee-700">
                 <MapPin className="w-3.5 h-3.5" />
-                <span>Ships securely to Chikmagalur, Bengaluru, & 24,000+ codes</span>
+                <span>Ships securely to Bengaluru, Mumbai, Delhi, & 24,000+ codes</span>
               </div>
               <p>🔒 PCI-DSS Compliant 256-bit Secure Banking Layer verified</p>
             </div>

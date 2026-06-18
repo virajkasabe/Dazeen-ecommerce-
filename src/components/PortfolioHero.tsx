@@ -268,7 +268,7 @@ export default function PortfolioHero({
               className="w-[120px] sm:w-[190px] md:w-[320px] shrink-0 text-left"
             >
               <p className="text-[9px] sm:text-[10px] md:text-xs font-semibold tracking-widest uppercase text-coffee-900/80 leading-relaxed">
-                PREMIUM CAFFEINE-FREE SHADE-GROWN FILTER COFFEE SOURCED FROM HIGH-ALTITUDE ESTATES OF CHIKMAGALUR
+                PREMIUM CAFFEINE-FREE SHADE-GROWN FILTER COFFEE SOURCED FROM HIGH-ALTITUDE ESTATES OF WESTERN GHATS
               </p>
               <div className="flex items-center gap-3.5 mt-2.5 text-[10px] font-bold text-[#5E0ED7] tracking-widest leading-none">
                 <button 
@@ -322,50 +322,50 @@ export default function PortfolioHero({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/92 backdrop-blur-xl z-60 flex items-center justify-center p-4 selection:bg-[#5E0ED7]/25 text-[#FAF6F0]"
+            className="fixed inset-0 bg-stone-950/70 backdrop-blur-md z-60 flex items-center justify-center p-4 selection:bg-[#5E0ED7]/25 text-stone-900"
           >
             <motion.div
               initial={{ scale: 0.94, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.94, opacity: 0, y: 15 }}
-              className="bg-[#120E0A] border border-white/10 p-6 sm:p-8 rounded-3xl max-w-lg w-full relative space-y-4 shadow-2xl shadow-black/80 max-h-[85vh] overflow-y-auto"
+              className="bg-white border border-stone-200 p-6 sm:p-8 rounded-3xl max-w-lg w-full relative space-y-4 shadow-2xl shadow-stone-950/20 max-h-[85vh] overflow-y-auto text-left"
             >
               <button
                 onClick={() => setShowTerms(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all cursor-pointer"
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-700 transition-all cursor-pointer"
               >
                 <X className="w-4 h-4 stroke-[2.5]" />
               </button>
 
-              <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-                <FileText className="w-5 h-5 text-yellow-500 animate-pulse" />
-                <h3 className="text-lg font-serif font-bold text-white">Terms & Quality Assurance</h3>
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-3">
+                <FileText className="w-5 h-5 text-emerald-600 animate-pulse" />
+                <h3 className="text-lg font-serif font-bold text-stone-900">Terms & Quality Assurance</h3>
               </div>
 
-              <div className="space-y-4 text-xs sm:text-sm text-white/80 leading-relaxed font-sans mt-2">
+              <div className="space-y-4 text-xs sm:text-sm text-stone-700 leading-relaxed font-sans mt-2">
                 <div className="space-y-1">
-                  <h4 className="text-white font-semibold uppercase tracking-wider text-[11px] text-yellow-500 font-mono">1. Pure Chemical-Free Sourcing</h4>
+                  <h4 className="text-stone-900 font-bold uppercase tracking-wider text-[11px] text-[#5E0ED7] font-mono">1. Pure Chemical-Free Sourcing</h4>
                   <p>
-                    All Dazeen Coffee blends are 100% shade-grown filter coffee sourced directly from Chikmagalur estates. We utilize advanced water processed separation, certifying 0.00% chemical solvents.
+                    All Dazeen Coffee blends are 100% shade-grown filter coffee sourced directly from high-altitude estates. We utilize advanced water processed separation, certifying 0.00% chemical solvents.
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <h4 className="text-white font-semibold uppercase tracking-wider text-[11px] text-yellow-500 font-mono">2. Free India-Wide Dispatch & Packaging</h4>
+                  <h4 className="text-stone-900 font-bold uppercase tracking-wider text-[11px] text-[#5E0ED7] font-mono">2. Free India-Wide Dispatch & Packaging</h4>
                   <p>
                     Orders are processed within 24 hours. We offer free express delivery for cart values above ₹499 across all major Indian zipcodes. Ground coffee is packaged in flavor-ventilated metallic canisters to retain natural oils.
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <h4 className="text-white font-semibold uppercase tracking-wider text-[11px] text-yellow-500 font-mono">3. Non-Jitter Refund Guarantee</h4>
+                  <h4 className="text-stone-900 font-bold uppercase tracking-wider text-[11px] text-[#5E0ED7] font-mono">3. Non-Jitter Refund Guarantee</h4>
                   <p>
                     If our caffeine-free coffee triggers any stimulant jitters, or prevents you from enjoying healthy delta sleep, contact us within 7 days for a complete, hassle-free replacement or refund.
                   </p>
                 </div>
 
-                <div className="space-y-1 pt-2 border-t border-white/5">
-                  <p className="text-[9px] text-[#C5A880] italic font-mono uppercase bg-white/5 p-2.5 rounded-xl text-center leading-normal">
+                <div className="space-y-1 pt-2 border-t border-stone-100">
+                  <p className="text-[10px] text-emerald-800 italic font-mono uppercase bg-emerald-50/80 p-2.5 rounded-xl text-center leading-normal">
                     Certified 100% natural, caffeine-removed, FSSAI quality compliant filter coffee.
                   </p>
                 </div>
@@ -373,7 +373,7 @@ export default function PortfolioHero({
 
               <button
                 onClick={() => setShowTerms(false)}
-                className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-400 text-coffee-950 font-bold rounded-xl text-xs uppercase tracking-widest cursor-pointer transition-all mt-4"
+                className="w-full py-2.5 bg-stone-900 hover:bg-stone-850 text-white font-bold rounded-xl text-xs uppercase tracking-widest cursor-pointer transition-all mt-4"
               >
                 I AGREE & CONFIRM
               </button>
@@ -389,67 +389,67 @@ export default function PortfolioHero({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/92 backdrop-blur-xl z-60 flex items-center justify-center p-4 selection:bg-[#5E0ED7]/25 text-[#FAF6F0]"
+            className="fixed inset-0 bg-stone-950/70 backdrop-blur-md z-60 flex items-center justify-center p-4 selection:bg-[#5E0ED7]/25 text-stone-900"
           >
             <motion.div
               initial={{ scale: 0.94, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.94, opacity: 0, y: 15 }}
-              className="bg-[#120E0A] border border-white/10 p-6 sm:p-8 rounded-3xl max-w-lg w-full relative space-y-4 shadow-2xl shadow-black/80 max-h-[85vh] overflow-y-auto text-left"
+              className="bg-white border border-stone-200 p-6 sm:p-8 rounded-3xl max-w-lg w-full relative space-y-4 shadow-2xl shadow-stone-950/20 max-h-[85vh] overflow-y-auto text-left"
             >
               <button
                 onClick={() => setShowContact(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all cursor-pointer"
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-700 transition-all cursor-pointer"
               >
                 <X className="w-4 h-4 stroke-[2.5]" />
               </button>
 
-              <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-                <Mail className="w-5 h-5 text-yellow-500 animate-pulse" />
-                <h3 className="text-lg font-serif font-bold text-white">Chikmagalur Estates & Support</h3>
+              <div className="flex items-center gap-2 border-b border-stone-100 pb-3">
+                <Mail className="w-5 h-5 text-emerald-600 animate-pulse" />
+                <h3 className="text-lg font-serif font-bold text-stone-900">Estates & Support</h3>
               </div>
 
-              <p className="text-xs text-[#FAF6F0]/70">
+              <p className="text-xs text-stone-600">
                 Have questions about custom grinds, retail packaging details, or need assistance? We are online 10 AM to 7 PM IST daily.
               </p>
 
               <div className="space-y-4 pt-1 text-xs sm:text-sm font-sans">
                 <div className="flex items-start gap-3">
-                  <div className="p-2.5 bg-white/5 rounded-xl text-yellow-500 shrink-0 border border-white/5">
+                  <div className="p-2.5 bg-stone-50 rounded-xl text-emerald-600 shrink-0 border border-stone-100">
                     <Phone className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-white/50 font-semibold text-[10px] uppercase tracking-wider font-mono">Helpline Calls & WhatsApp</h4>
-                    <p className="text-white font-mono mt-0.5 font-bold">+91 98765 43210</p>
-                    <p className="text-[10px] text-white/40">Expected response: &lt; 5 minutes</p>
+                    <h4 className="text-stone-500 font-semibold text-[10px] uppercase tracking-wider font-mono">Helpline Calls & WhatsApp</h4>
+                    <p className="text-stone-950 font-mono mt-0.5 font-bold">+91 98345 00977</p>
+                    <p className="text-[10px] text-stone-400">Expected response: &lt; 5 minutes</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2.5 bg-white/5 rounded-xl text-yellow-500 shrink-0 border border-white/5">
+                  <div className="p-2.5 bg-stone-50 rounded-xl text-emerald-600 shrink-0 border border-stone-100">
                     <Mail className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-white/50 font-semibold text-[10px] uppercase tracking-wider font-mono">Support and Partnership Email</h4>
-                    <p className="text-white font-mono mt-0.5 font-bold">peace@dazeen.com</p>
-                    <p className="text-[10px] text-[#C5A880]">Inquire for custom bulk order guidelines</p>
+                    <h4 className="text-stone-500 font-semibold text-[10px] uppercase tracking-wider font-mono">Support and Partnership Email</h4>
+                    <p className="text-stone-950 font-mono mt-0.5 font-bold">support@dazeen.in</p>
+                    <p className="text-[10px] text-stone-500 font-mono">Inquire for custom bulk order guidelines</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="p-2.5 bg-white/5 rounded-xl text-yellow-500 shrink-0 border border-white/5">
+                  <div className="p-2.5 bg-stone-50 rounded-xl text-emerald-600 shrink-0 border border-stone-100">
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-white/50 font-semibold text-[10px] uppercase tracking-wider font-mono">Chikmagalur Roastery Address</h4>
-                    <p className="text-[#FAF6F0]/85 mt-0.5 text-xs">Baba Budangiri Estates No. 44, Sourcing Station, Chikmagalur, Karnataka - 577101</p>
+                    <h4 className="text-stone-500 font-semibold text-[10px] uppercase tracking-wider font-mono">Roastery Address</h4>
+                    <p className="text-stone-700 mt-0.5 text-xs">Baba Budangiri Estates No. 44, Sourcing Station, Western Ghats, Karnataka - 577101</p>
                   </div>
                 </div>
               </div>
 
               <div className="pt-2">
                 <a
-                  href="mailto:peace@dazeen.com"
+                  href="mailto:support@dazeen.in"
                   className="w-full py-2.5 bg-[#5E0ED7] hover:bg-[#5E0ED7]/90 text-white font-bold rounded-xl text-xs uppercase tracking-widest block text-center cursor-pointer transition-all shadow-md mt-2"
                 >
                   SEND DIRECT SUPPORT EMAIL

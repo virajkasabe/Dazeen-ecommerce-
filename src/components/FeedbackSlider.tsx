@@ -13,7 +13,7 @@ const testimonials = [
     name: "Aman Deshmukh",
     role: "Software Architect, Pune",
     rating: 5,
-    text: "I was highly skeptical about caffeine-free coffee powder. But Dazeen hazelnut and classic velvet taste exactly like freshly brewed traditional Chikmagalur filter coffee. Zero nighttime sleeplessness, absolute peace of mind!",
+    text: "I was highly skeptical about caffeine-free coffee powder. But Dazeen hazelnut and classic velvet taste exactly like freshly brewed traditional premium roasted Indian filter coffee. Zero nighttime sleeplessness, absolute peace of mind!",
     gradient: "linear-gradient(137deg, #FF3D77 0%, #FFB1CE 45%, #FF9D3C 100%)",
     delay: 0.1
   },

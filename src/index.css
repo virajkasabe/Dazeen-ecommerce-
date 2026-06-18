@@ -26,6 +26,17 @@
   --color-accent-amber: #C5A880;
   --color-accent-gold: #D4AF37;
   --color-accent-darkgold: #B4942B;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-landing-surface: rgba(255, 255, 255, 0.10);
+  --color-landing-surface-hover: rgba(255, 255, 255, 0.16);
+  --color-landing-border: rgba(255, 255, 255, 0.10);
+}
+
+:root {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 98%;
 }
 
 @layer base {

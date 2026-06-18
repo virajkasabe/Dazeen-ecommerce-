@@ -93,7 +93,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
   const [productPrice, setProductPrice] = useState<number>(449);
   const [productImage, setProductImage] = useState("");
   const [productRoast, setProductRoast] = useState<Product["roastLevel"]>("Medium");
-  const [productOrigin, setProductOrigin] = useState("Chikmagalur Hills, Karnataka");
+  const [productOrigin, setProductOrigin] = useState("Western Ghats, Karnataka");
   const [productProcess, setProductProcess] = useState("Caffeine-Free Method, 100% Arabica");
   const [productCaffeine, setProductCaffeine] = useState("0.0% Caffeine");
 
@@ -303,7 +303,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
     setProductPrice(449);
     setProductImage("https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=600");
     setProductRoast("Medium");
-    setProductOrigin("Chikmagalur Hills, Karnataka");
+    setProductOrigin("Western Ghats, Karnataka");
     setProductProcess("Caffeine-Free Process, Premium Arabica");
     setProductCaffeine("0.0% Caffeine");
     setIsFormOpen(true);
@@ -319,7 +319,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
     setProductPrice(p.price);
     setProductImage(p.image);
     setProductRoast(p.roastLevel);
-    setProductOrigin(p.origin || "Chikmagalur Hills");
+    setProductOrigin(p.origin || "Western Ghats Hills");
     setProductProcess(p.process || "Caffeine-Free Method");
     setProductCaffeine(p.caffeineCount || "0.0% Caffeine");
     setIsFormOpen(true);
@@ -981,7 +981,7 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
                       type="text"
                       value={productOrigin}
                       onChange={(e) => setProductOrigin(e.target.value)}
-                      placeholder="Chikmagalur Hills, Karnataka"
+                      placeholder="Western Ghats Hills, Karnataka"
                       className="w-full px-3.5 py-2.5 bg-[#FAF6F0] rounded-xl border border-coffee-200 outline-none focus:border-accent-gold block"
                     />
                   </div>

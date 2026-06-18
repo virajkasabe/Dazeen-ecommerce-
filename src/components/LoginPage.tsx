@@ -391,7 +391,7 @@ export default function LoginPage({
                 <p className="text-[11px] font-mono text-coffee-500">
                   {currentUser.email ? currentUser.email : `Phone: ${currentUser.phone}`}
                 </p>
-                <div className="flex items-center gap-1.5 mt-1">
+                <div className="flex flex-wrap gap-1.5 mt-1">
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase border ${
                     isAdmin 
                       ? "bg-amber-50 text-accent-darkgold border-amber-200" 
