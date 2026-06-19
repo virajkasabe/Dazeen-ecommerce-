@@ -26,7 +26,8 @@ async function startServer() {
         });
       }
       
-      // Determine if keys are sandbox or production based on secret key prefix
+      // const cashfree = Cashfree({ mode: "production" });
+      
       const isProduction = secretKey.startsWith("cfsk_ma_prod_");
       const url = isProduction 
         ? "https://api.cashfree.com/pg/orders" 
