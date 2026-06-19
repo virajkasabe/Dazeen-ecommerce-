@@ -29,7 +29,8 @@ async function startServer() {
       // const cashfree = Cashfree({ mode: "production" });
       
       const isProduction = secretKey.startsWith("cfsk_ma_prod_");
-      const url = isProduction 
+      const url = "https://api.cashfree.com/pg/orders"; 
+      
         ? "https://api.cashfree.com/pg/orders" 
         : "https://sandbox.cashfree.com/pg/orders";
 
