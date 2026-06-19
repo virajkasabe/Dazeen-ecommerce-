@@ -2,6 +2,7 @@ import { useState, FormEvent, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Coffee, ShieldCheck, Mail, Lock, LogOut, ArrowRight, ArrowLeft, Phone, User, KeyRound, ArrowUpRight } from "lucide-react";
 import Hls from "hls.js";
+import { notificationService } from "../utils/notifications";
 
 interface LoginPageProps {
   onBackToHome: () => void;
@@ -64,6 +65,93 @@ export default function LoginPage({
   const [profileAddress, setProfileAddress] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Slider for Logout state
+  const sliderContainerRef = useRef<HTMLDivElement>(null);
+  const [maxDragDistance, setMaxDragDistance] = useState(250);
+
+  useEffect(() => {
+    if (currentUser && sliderContainerRef.current) {
+      const parentWidth = sliderContainerRef.current.clientWidth;
+      const calculated = parentWidth - 48 - 8;
+      setMaxDragDistance(calculated > 100 ? calculated : 250);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (sliderContainerRef.current) {
+        const parentWidth = sliderContainerRef.current.clientWidth;
+        const calculated = parentWidth - 48 - 8;
+        setMaxDragDistance(calculated > 100 ? calculated : 250);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Address Dialog / Accordion Form States
+  const [newAddressFormOpen, setNewAddressFormOpen] = useState(false);
+  const [formNameValue, setFormNameValue] = useState("");
+  const [formAddressValue, setFormAddressValue] = useState("");
+  const [formPhoneValue, setFormPhoneValue] = useState("");
+
+  const handleSaveNewAddress = (e: FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    setIsSavingProfile(true);
+    setError(null);
+    setSuccessMsg(null);
+
+    setTimeout(() => {
+      try {
+        const nameVal = formNameValue.trim() || profileName;
+        const addrVal = formAddressValue.trim();
+        const phoneVal = formPhoneValue.trim() || profilePhone;
+
+        const updatedUser = {
+          ...currentUser,
+          displayName: nameVal,
+          address: addrVal,
+          phoneNumber: phoneVal,
+        };
+
+        // Sync with primary details
+        setProfileName(nameVal);
+        setProfileAddress(addrVal);
+        setProfilePhone(phoneVal);
+
+        // Update in the registered list
+        const savedUsers = localStorage.getItem("dazeen_local_users_v1");
+        if (savedUsers) {
+          const usersList: LocalUser[] = JSON.parse(savedUsers);
+          const updatedList = usersList.map((u) => {
+            if (u.uid === currentUser.uid) {
+              return {
+                ...u,
+                displayName: nameVal,
+                address: addrVal,
+                phone: phoneVal,
+                phoneNumber: phoneVal,
+              };
+            }
+            return u;
+          });
+          localStorage.setItem("dazeen_local_users_v1", JSON.stringify(updatedList));
+        }
+
+        // Update currently active session
+        localStorage.setItem("dazeen_current_user", JSON.stringify(updatedUser));
+        onLoginSuccess(updatedUser, isAdmin);
+        setSuccessMsg("Saved location and recipient contact updated! 🗺️✨");
+        setNewAddressFormOpen(false);
+      } catch (err: any) {
+        setError("Unable to save location detail.");
+      } finally {
+        setIsSavingProfile(false);
+      }
+    }, 400);
+  };
 
   // Sync profile edits with logged-in user state details
   useEffect(() => {
@@ -371,110 +459,251 @@ export default function LoginPage({
         )}
 
         {currentUser ? (
-          /* LOGGED IN VIEW */
-          <div className="space-y-6 pt-2">
-            <div className="p-4 bg-[#FAF6F0] rounded-2xl border border-coffee-150 flex items-center gap-3.5 text-left">
-              {currentUser.photoURL ? (
-                <img 
-                  src={currentUser.photoURL} 
-                  referrerPolicy="no-referrer"
-                  alt="Avatar" 
-                  className="w-12 h-12 rounded-full border border-coffee-300 object-cover" 
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-coffee-800 text-[#FAF6F0] flex items-center justify-center font-bold text-lg border border-coffee-700 font-mono">
-                  {currentUser.displayName?.charAt(0) || "U"}
+          /* LOGGED IN VIEW - SPECIFICALLY CUSTOMIZED BY USER REQUEST */
+          <div className="space-y-6 pt-2 text-stone-900 bg-white">
+            
+            {/* 1. Greeting header */}
+            <div className="text-center space-y-1 py-1">
+              <h3 className="text-2xl font-serif font-black text-stone-900 tracking-tight">
+                Hello, {profileName || currentUser.displayName || "Dazeen Guest"} 👋
+              </h3>
+              <p className="text-xs text-stone-500 font-semibold font-mono">Premium Coffee Connoisseur</p>
+            </div>
+
+            {/* 2. Side-by-side pill buttons (ak k side ak) */}
+            <div className="flex justify-center items-center gap-2 py-1 overflow-x-auto no-scrollbar">
+              <button
+                type="button"
+                onClick={() => {
+                  notificationService.send(
+                    "Logistics tracker opened! 📦🛩️",
+                    `Hi ${profileName || "User"}, we are pulling up your Dazeen coffee shipments checklist!`
+                  );
+                  onBackToHome();
+                }}
+                className="px-4 py-2 bg-stone-900 text-amber-200 font-extrabold uppercase tracking-widest text-[9px] font-mono rounded-full hover:bg-stone-850 cursor-pointer shadow-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+              >
+                <span>Orders</span>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  notificationService.send(
+                    "Looking for cozy vibes? ☕🤤",
+                    "Directly reloading our pure caffeine-free collections. Complete purchase with 1-click!"
+                  );
+                  onBackToHome();
+                }}
+                className="px-4 py-2 bg-stone-100 text-stone-800 font-extrabold uppercase tracking-widest text-[9px] font-mono rounded-full hover:bg-stone-250 cursor-pointer shadow-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+              >
+                <span>Buy Again</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  notificationService.send(
+                    "Reorder setup initiated! ⚡",
+                    "We are prepping your favorite beans instantly. Check out your bag!"
+                  );
+                  onBackToHome();
+                }}
+                className="px-4 py-2 bg-stone-100 text-stone-800 font-extrabold uppercase tracking-widest text-[9px] font-mono rounded-full hover:bg-stone-250 cursor-pointer shadow-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-1"
+              >
+                <span>Reorder</span>
+              </button>
+            </div>
+
+            {/* 3. Saved Address box with "+" option beside it to save/update location */}
+            <div className="space-y-2 text-left">
+              <span className="block text-[10px] font-extrabold font-mono uppercase tracking-wider text-stone-500">
+                Registered Shipping Area
+              </span>
+              
+              <div className="flex items-stretch gap-2">
+                <div className="flex-1 bg-stone-50 p-4 rounded-xl border border-stone-200/55 flex flex-col justify-center min-h-[72px]">
+                  {profileAddress ? (
+                    <div className="space-y-1 text-xs">
+                      <span className="block text-[8px] text-[#B4942B] font-bold uppercase tracking-widest font-mono">
+                        Primary Location
+                      </span>
+                      <p className="text-stone-850 font-bold leading-relaxed">
+                        {profileAddress}
+                      </p>
+                      {profilePhone && (
+                        <p className="text-[10px] text-stone-500 font-semibold font-mono">
+                          📞 {profilePhone}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-1">
+                      <p className="text-[11px] text-stone-400 font-bold">No registered address.</p>
+                      <p className="text-[9px] text-stone-400">Click the + helper next to the box to enter.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="flex-grow space-y-0.5">
-                <p className="text-sm font-bold text-coffee-950">{currentUser.displayName}</p>
-                <p className="text-[11px] font-mono text-coffee-500">
-                  {currentUser.email ? currentUser.email : `Phone: ${currentUser.phone}`}
-                </p>
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase border ${
-                    isAdmin 
-                      ? "bg-amber-50 text-accent-darkgold border-amber-200" 
-                      : "bg-emerald-50 text-emerald-800 border-emerald-200"
-                  }`}>
-                    {isAdmin ? <ShieldCheck className="w-2.5 h-2.5" /> : null}
-                    {isAdmin ? "Super Admin" : "Verified Customer"}
+
+                {/* "+" option button beside address box */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewAddressFormOpen((prev) => !prev);
+                    setFormAddressValue(profileAddress || "");
+                    setFormNameValue(profileName || currentUser.displayName || "");
+                    setFormPhoneValue(profilePhone || currentUser.phone || "");
+                  }}
+                  className="w-12 bg-stone-100 hover:bg-stone-200 text-stone-900 rounded-xl border border-stone-200 flex items-center justify-center font-black active:scale-95 transition-all cursor-pointer shadow-xs flex-shrink-0"
+                  title="Add/Edit Saved Location Address"
+                >
+                  <span className="text-2xl leading-none font-bold text-stone-800">+</span>
+                </button>
+              </div>
+
+              {/* Collapsed Editable details form opened on click of "+" option */}
+              <AnimatePresence>
+                {newAddressFormOpen && (
+                  <motion.form
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25 }}
+                    onSubmit={handleSaveNewAddress}
+                    className="bg-stone-50 border border-stone-200/80 rounded-xl p-4 mt-2.5 space-y-3 overflow-hidden text-left"
+                  >
+                    <div className="flex justify-between items-center border-b border-stone-200/60 pb-1.5 mb-1">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-stone-800 font-mono">Update Delivery Address</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setNewAddressFormOpen(false)} 
+                        className="text-[10px] text-stone-400 hover:text-rose-600 font-bold cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <label className="block text-[8px] font-mono text-stone-500 uppercase tracking-widest font-extrabold">Recipient Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={formNameValue}
+                        onChange={(e) => setFormNameValue(e.target.value)}
+                        placeholder="e.g. Rahul Kumar"
+                        className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-xs text-stone-900 outline-none focus:border-[#B4942B] font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <label className="block text-[8px] font-mono text-stone-500 uppercase tracking-widest font-extrabold">Complete Sourcing Address</label>
+                      <textarea
+                        required
+                        rows={2}
+                        value={formAddressValue}
+                        onChange={(e) => setFormAddressValue(e.target.value)}
+                        placeholder="Flat/House no, sector colony, city, landmark, PIN"
+                        className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-xs text-stone-900 outline-none focus:border-[#B4942B] font-semibold resize-none"
+                      />
+                    </div>
+
+                    <div className="space-y-0.5">
+                      <label className="block text-[8px] font-mono text-stone-500 uppercase tracking-widest font-extrabold">Calling Contact Number</label>
+                      <input
+                        type="tel"
+                        required
+                        pattern="^[6-9]\d{9}$"
+                        maxLength={10}
+                        value={formPhoneValue}
+                        onChange={(e) => setFormPhoneValue(e.target.value.replace(/\D/g, ""))}
+                        placeholder="e.g. 9876543210"
+                        className="w-full px-3 py-2 bg-white border border-stone-200 rounded-lg text-xs text-stone-900 outline-none focus:border-[#B4942B] font-semibold"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSavingProfile}
+                      className="w-full py-2.5 bg-stone-900 hover:bg-stone-850 text-white rounded-lg text-[10px] font-mono font-black tracking-widest uppercase cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingProfile ? "Saving location..." : "Save Saved Location"}
+                    </button>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* 4. Show login mail or user number */}
+            <div className="bg-stone-50/50 p-3 rounded-xl border border-stone-200/50 flex items-center justify-between text-left">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500">
+                  <Mail className="w-4 h-4 text-[#B4942B]" />
+                </div>
+                <div>
+                  <span className="block text-[8px] font-mono uppercase text-stone-400 font-extrabold tracking-wider">Account Credentials</span>
+                  <span className="text-xs font-mono text-stone-750 font-bold break-all">
+                    {currentUser.email ? currentUser.email : `Phone Number: ${currentUser.phone || currentUser.phoneNumber}`}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Editable Name & Address details for faster checkouts */}
-            <form onSubmit={handleSaveProfile} className="space-y-4 text-left pt-4 border-t border-coffee-150">
-              <div>
-                <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-coffee-600 mb-1">
-                  Recipient Full Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  placeholder="e.g. Rahul Kumar"
-                  className="w-full px-3 py-2.5 border border-coffee-200 rounded-xl text-xs bg-[#FAF6F0] focus:outline-none focus:border-coffee-500 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-coffee-600 mb-1">
-                  Complete Delivery Address (with landmarks)
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={profileAddress}
-                  onChange={(e) => setProfileAddress(e.target.value)}
-                  placeholder="Apartment flat/house no., street colony, landmark, City, PIN Code"
-                  className="w-full px-3 py-2.5 border border-coffee-200 rounded-xl text-xs bg-[#FAF6F0] focus:outline-none focus:border-coffee-500 transition-colors resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-coffee-600 mb-1">
-                  Primary Delivery Call Number
-                </label>
-                <input
-                  type="tel"
-                  required
-                  pattern="^[6-9]\d{9}$"
-                  maxLength={10}
-                  value={profilePhone}
-                  onChange={(e) => setProfilePhone(e.target.value.replace(/\D/g, ""))}
-                  placeholder="e.g. 9876543210"
-                  className="w-full px-3 py-2.5 border border-coffee-200 rounded-xl text-xs bg-[#FAF6F0] focus:outline-none focus:border-coffee-500 transition-colors"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSavingProfile}
-                className="w-full py-2.5 bg-coffee-100 hover:bg-coffee-200 text-coffee-950 font-bold text-xs uppercase tracking-wider font-mono rounded-xl transition duration-200 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            {/* 5. Slider in which Log out button sits (Slide/Swipe to Logout) */}
+            <div className="space-y-2 pt-2">
+              <span className="block text-[10px] font-extrabold font-mono uppercase tracking-wider text-stone-500 text-left">
+                Security Gesture (Swipe to Logout)
+              </span>
+              
+              <div 
+                ref={sliderContainerRef}
+                className="relative w-full h-14 bg-stone-100/30 backdrop-blur-xl rounded-2xl border border-stone-200/50 overflow-hidden flex items-center p-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] select-none"
               >
-                {isSavingProfile ? "Saving Details..." : "Save Delivery Settings 💾"}
-              </button>
-            </form>
+                {/* Visual indicator slider tracking fill with premium golden glass aura */}
+                <div className="absolute inset-y-1 left-1 bg-gradient-to-r from-stone-200/30 to-[#B4942B]/10 rounded-xl pointer-events-none" style={{ width: "42px" }}></div>
+                
+                {/* Centered assistance prompt */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                  <span className="text-[9px] font-mono tracking-widest uppercase font-black text-stone-500/80">
+                    Slide fully to end to Logout →
+                  </span>
+                </div>
 
-            <div className="space-y-2">
-              <button
-                onClick={onBackToHome}
-                className="w-full py-4 bg-coffee-900 text-coffee-50 font-bold text-xs rounded-xl shadow-lg hover:bg-coffee-800 transition-colors uppercase font-mono cursor-pointer flex items-center justify-center gap-2"
-              >
-                Proceed to Shipments <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                onClick={handleSignOut}
-                disabled={loading}
-                className="w-full py-3 bg-white text-coffee-700 border border-coffee-200 font-semibold text-xs rounded-xl hover:bg-coffee-50 transition-colors cursor-pointer flex items-center justify-center gap-2 uppercase font-mono"
-              >
-                <LogOut className="w-3.5 h-3.5" /> {loading ? "Signing out..." : "Sign Out Account"}
-              </button>
+                <motion.div
+                  drag="x"
+                  dragConstraints={{ left: 0, right: maxDragDistance }}
+                  dragElastic={0}
+                  dragMomentum={false}
+                  animate={{ x: 0 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 26 }}
+                  onDragEnd={(event, info) => {
+                    // Must pull completely to the dynamic end of track
+                    if (info.offset.x >= maxDragDistance - 10) {
+                      handleSignOut();
+                    }
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  whileDrag={{ scale: 1.05, backgroundColor: "#e11d48" }}
+                  className="w-12 h-12 bg-stone-900 text-white rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing z-10 shadow-md shadow-stone-900/10 transition-colors"
+                  title="Swipe to log out"
+                >
+                  <LogOut className="w-4 h-4 rotate-180 text-white" />
+                </motion.div>
+                
+                <span className="absolute right-4 text-[9px] text-[#B4942B] font-black font-mono tracking-widest select-none pointer-events-none">
+                  EXIT
+                </span>
+              </div>
             </div>
+
+            {/* Home Navigation button */}
+            <button
+              type="button"
+              onClick={onBackToHome}
+              className="w-full py-3.5 bg-stone-900 text-white hover:bg-stone-850 font-bold text-xs rounded-xl shadow-lg transition-colors uppercase font-mono cursor-pointer flex items-center justify-center gap-2"
+            >
+              Close Profile <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+
           </div>
         ) : (
           /* BRAND NEW FORMS (NO BYPASS BUTTONS!) */

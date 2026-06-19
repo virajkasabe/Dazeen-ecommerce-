@@ -55,26 +55,21 @@ class NotificationSystem {
   }
 
   send(title: string, body: string, icon = "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=128") {
-    // 1. Try Native Browser Notification
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-      try {
-        new Notification(title, {
-          body,
-          icon,
-          badge: icon,
-        });
-        return;
-      } catch (e) {
-        console.warn("Browser notification failed, falling back to simulated element inside page:", e);
+    // Try Native Browser System Notification ONLY
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "granted") {
+        try {
+          new Notification(title, {
+            body,
+            icon,
+            tag: "dazeen-" + Math.random(), // Unique tab notification
+          });
+        } catch (e) {
+          console.warn("Browser notification failed:", e);
+        }
+      } else {
+        console.log("No real notification permission granted yet to push:", title);
       }
-    }
-
-    // 2. Fallback: Custom beautifully animated toast in window context if tab is active
-    if (typeof window !== "undefined") {
-      const event = new CustomEvent("dazeen-toast", {
-        detail: { title, body }
-      });
-      window.dispatchEvent(event);
     }
   }
 

@@ -47,7 +47,6 @@ export default function App() {
     return "default";
   });
   const [showPermissionBanner, setShowPermissionBanner] = useState<boolean>(false);
-  const [activeToast, setActiveToast] = useState<{ title: string; body: string } | null>(null);
 
   useEffect(() => {
     // Check if user has already made a decision, else prompt with a pretty banner
@@ -60,30 +59,11 @@ export default function App() {
     }
   }, [notifPermission]);
 
-  // Listener for Custom backup Toast Events 
+  // Automatically start the witty marketing intervals
   useEffect(() => {
-    const handleCustomToast = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail) {
-        setActiveToast({
-          title: customEvent.detail.title,
-          body: customEvent.detail.body
-        });
-        // Auto dismiss after 7s
-        const t = setTimeout(() => {
-          setActiveToast(null);
-        }, 7000);
-        return () => clearTimeout(t);
-      }
-    };
-
-    window.addEventListener("dazeen-toast", handleCustomToast);
-    
-    // Automatically start the witty marketing intervals
     notificationService.startMarketingEngine();
 
     return () => {
-      window.removeEventListener("dazeen-toast", handleCustomToast);
       notificationService.stopMarketingEngine();
     };
   }, []);
@@ -98,11 +78,6 @@ export default function App() {
       notificationService.send("Push Registered Successfully! 📦💖", "You are subscribed to Dazeen updates & our special 1m spicy alerts!");
     } else {
       setNotifPermission("denied");
-      // Send fallback inside page to verify it is active
-      setActiveToast({
-        title: "In-App Alerts Enabled! 🔔",
-        body: "Browser alerts are blocked, but you will still receive our premium order updates right here!"
-      });
     }
   };
 
@@ -436,36 +411,7 @@ export default function App() {
         />
       )}
 
-      {/* Elegant Witty / Spicy Notification Hub in Page */}
-      <AnimatePresence>
-        {activeToast && (
-          <motion.div
-            initial={{ opacity: 0, y: -50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed top-24 right-4 z-50 max-w-sm w-full bg-white/95 backdrop-blur-md rounded-2xl border border-stone-200/50 shadow-xl p-4 flex gap-3 text-left overflow-hidden sm:right-6"
-          >
-            <div className="w-10 h-10 rounded-full bg-stone-900 text-white flex items-center justify-center flex-shrink-0 animate-bounce">
-              <Coffee className="w-5 h-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-stone-900 truncate flex items-center gap-1.5">
-                {activeToast.title} ☕
-              </h4>
-              <p className="text-xs text-stone-600 mt-1 leading-relaxed">
-                {activeToast.body}
-              </p>
-            </div>
-            <button
-              onClick={() => setActiveToast(null)}
-              className="text-stone-400 hover:text-stone-700 p-1 self-start cursor-pointer transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* Floating Permission Bar - Pure minimal look */}
       <AnimatePresence>

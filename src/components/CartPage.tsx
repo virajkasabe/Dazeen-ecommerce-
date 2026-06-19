@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Trash2, Plus, Minus, Ticket, CreditCard, Sparkles, 
-  MapPin, Truck, Check, ChevronLeft, AlertCircle, ShoppingBag, Landmark, Home, Briefcase
+  MapPin, Truck, Check, ChevronLeft, ChevronRight, AlertCircle, ShoppingBag, Landmark, Home, Briefcase
 } from "lucide-react";
 import { CartItem } from "../types";
 import { notificationService } from "../utils/notifications";
@@ -36,6 +36,11 @@ export default function CartPage({
   const [coupon, setCoupon] = useState<string>("");
   const [activeCoupon, setActiveCoupon] = useState<{ code: string; type: "percent" | "flat"; value: number } | null>(null);
   const [couponError, setCouponError] = useState<string>("");
+
+  // Checkout sequence wizard state
+  const [checkoutStep, setCheckoutStep] = useState<"cart" | "address" | "payment">("cart");
+  const [fetchedVillages, setFetchedVillages] = useState<string[]>([]);
+  const [isFetchingPincode, setIsFetchingPincode] = useState<boolean>(false);
 
   // Flipkart & Amazon style Delivery address fields
   const [fullName, setFullName] = useState<string>(currentUser?.displayName || "");
@@ -134,40 +139,78 @@ export default function CartPage({
     }
   };
 
-  // Quick State/City Autopopulate on Pincode (Indian standard search)
+  // Quick State/City Autopopulate on Pincode (Indian standard search - dynamically fetches real town/gaw/state)
   useEffect(() => {
+    let active = true;
     if (pincode.length === 6) {
-      // Basic mock database to feel real for major hubs
-      const pinPrefix = pincode.substring(0, 3);
-      if (pinPrefix === "560" || pinPrefix === "561" || pinPrefix === "562") {
-        setCity("Bengaluru");
-        setState("Karnataka");
-      } else if (pinPrefix === "577" || pinPrefix === "578") {
-        setCity("Coffee Estates Area");
-        setState("Karnataka");
-      } else if (pinPrefix === "400" || pinPrefix === "401") {
-        setCity("Mumbai");
-        setState("Maharashtra");
-      } else if (pinPrefix === "110") {
-        setCity("New Delhi");
-        setState("Delhi");
-      } else if (pinPrefix === "600") {
-        setCity("Chennai");
-        setState("Tamil Nadu");
-      } else if (pinPrefix === "700") {
-        setCity("Kolkata");
-        setState("West Bengal");
-      } else if (pinPrefix === "500") {
-        setCity("Hyderabad");
-        setState("Telangana");
-      } else if (pinPrefix === "411") {
-        setCity("Pune");
-        setState("Maharashtra");
-      } else if (!city) {
-        setCity("Pan-India City");
-        setState("Indian Standard State");
-      }
+      setIsFetchingPincode(true);
+      setSubmitError("");
+      fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!active) return;
+          if (Array.isArray(data) && data[0]?.Status === "Success" && data[0]?.PostOffice) {
+            const offices = data[0].PostOffice;
+            const stateVal = offices[0]?.State || "";
+            // Use District or Taluk/Division for Town/City
+            const districtVal = offices[0]?.District || offices[0]?.Taluk || "";
+            
+            setState(stateVal);
+            setCity(districtVal);
+            
+            // Extract village/gaw names
+            const villages = offices.map((post: any) => post.Name).filter(Boolean);
+            setFetchedVillages(villages);
+            if (villages.length > 0) {
+              setAddressLine2(villages[0]);
+            }
+          } else {
+            // Fallback for mock prefix when API doesn't find the pincode
+            const pinPrefix = pincode.substring(0, 3);
+            if (pinPrefix === "560" || pinPrefix === "561" || pinPrefix === "562") {
+              setCity("Bengaluru");
+              setState("Karnataka");
+            } else if (pinPrefix === "577") {
+              setCity("Chikmagalur");
+              setState("Karnataka");
+            } else if (pinPrefix === "400") {
+              setCity("Mumbai");
+              setState("Maharashtra");
+            } else if (pinPrefix === "110") {
+              setCity("New Delhi");
+              setState("Delhi");
+            } else if (pinPrefix === "600") {
+              setCity("Chennai");
+              setState("Tamil Nadu");
+            } else if (pinPrefix === "700") {
+              setCity("Kolkata");
+              setState("West Bengal");
+            } else if (pinPrefix === "500") {
+              setCity("Hyderabad");
+              setState("Telangana");
+            } else if (pinPrefix === "411") {
+              setCity("Pune");
+              setState("Maharashtra");
+            } else {
+              setCity("");
+              setState("");
+            }
+            setFetchedVillages([]);
+          }
+        })
+        .catch((err) => {
+          console.error("Pincode fetch failed, fallback applied:", err);
+          setFetchedVillages([]);
+        })
+        .finally(() => {
+          if (active) setIsFetchingPincode(false);
+        });
+    } else {
+      setFetchedVillages([]);
     }
+    return () => {
+      active = false;
+    };
   }, [pincode]);
 
   // Pay trigger via Cashfree Gateway
@@ -470,506 +513,869 @@ export default function CartPage({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-28 selection:bg-[#5E0ED7]/10 selection:text-coffee-950">
       
-      {/* Back Button */}
-      <button
-        onClick={() => onSetView("main")}
-        className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-coffee-800 hover:text-[#5E0ED7] transition-colors mb-8 cursor-pointer"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        <span>Continue Shopping</span>
-      </button>
+      {/* Back to Shopping Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <button
+          onClick={() => {
+            if (checkoutStep === "payment") {
+              setCheckoutStep("address");
+            } else if (checkoutStep === "address") {
+              setCheckoutStep("cart");
+            } else {
+              onSetView("main");
+            }
+          }}
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-coffee-800 hover:text-[#5E0ED7] transition-all cursor-pointer bg-white border border-coffee-200 px-4 py-2.5 rounded-xl shadow-sm hover:shadow"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span>
+            {checkoutStep === "payment"
+              ? "Back to Address"
+              : checkoutStep === "address"
+              ? "Back to Cart"
+              : "Continue Shopping"}
+          </span>
+        </button>
 
+        {/* Display clear custom store header */}
+        <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-coffee-500 uppercase tracking-widest">
+          <Sparkles className="w-4 h-4 text-[#5E0ED7]" />
+          <span>Shanti Brew Premium Store • ₹ INR</span>
+        </div>
+      </div>
+
+      {/* Checkout Wizard Progression Steps Timeline */}
+      <div className="max-w-xl mx-auto mb-10 bg-coffee-50 border border-coffee-200 p-4 rounded-2xl shadow-inner relative">
+        <div className="flex items-center justify-between relative">
+          
+          {/* Background Connector Bar */}
+          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-coffee-200 z-0"></div>
+          <div 
+            className="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-[#5E0ED7] transition-all duration-500 z-0"
+            style={{ 
+              width: checkoutStep === "cart" ? "0%" : checkoutStep === "address" ? "50%" : "100%" 
+            }}
+          ></div>
+
+          {/* Timeline Step 1: Cart Items */}
+          <button 
+            type="button"
+            onClick={() => setCheckoutStep("cart")}
+            className="flex flex-col items-center relative z-10 focus:outline-none focus:ring-0 group"
+          >
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 border ${
+              checkoutStep === "cart" || checkoutStep === "address" || checkoutStep === "payment"
+                ? "bg-[#5E0ED7] border-[#5E0ED7] text-white scale-110 shadow-md shadow-[#5E0ED7]/20"
+                : "bg-white border-coffee-300 text-coffee-800 hover:border-coffee-500"
+            }`}>
+              1
+            </div>
+            <span className={`text-[10px] font-bold font-mono tracking-widest uppercase mt-2 ${
+              checkoutStep === "cart" ? "text-[#5E0ED7]" : "text-coffee-600"
+            }`}>
+              Cart Items
+            </span>
+          </button>
+
+          {/* Timeline Step 2: Delivery Address Address */}
+          <button 
+            type="button"
+            onClick={() => {
+              if (cart.length > 0) {
+                setCheckoutStep("address");
+              }
+            }}
+            disabled={cart.length === 0}
+            className="flex flex-col items-center relative z-10 focus:outline-none focus:ring-0 group disabled:opacity-50"
+          >
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 border ${
+              checkoutStep === "address" || checkoutStep === "payment"
+                ? "bg-[#5E0ED7] border-[#5E0ED7] text-white scale-110 shadow-md shadow-[#5E0ED7]/20"
+                : "bg-white border-coffee-300 text-coffee-800"
+            }`}>
+              2
+            </div>
+            <span className={`text-[10px] font-bold font-mono tracking-widest uppercase mt-2 ${
+              checkoutStep === "address" ? "text-[#5E0ED7]" : "text-coffee-600"
+            }`}>
+              Address
+            </span>
+          </button>
+
+          {/* Timeline Step 3: Payment Option Details */}
+          <button 
+            type="button"
+            onClick={() => {
+              // Quick check
+              if (!fullName || !phoneNumber || phoneNumber.length < 10 || !pincode || pincode.length !== 6 || !addressLine1 || !addressLine2 || !city || !state) {
+                setSubmitError("Please fill out and complete all address details first.");
+                return;
+              }
+              setCheckoutStep("payment");
+            }}
+            disabled={!fullName || !pincode || pincode.length !== 6}
+            className="flex flex-col items-center relative z-10 focus:outline-none focus:ring-0 group disabled:opacity-55"
+          >
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 border ${
+              checkoutStep === "payment"
+                ? "bg-[#5E0ED7] border-[#5E0ED7] text-white scale-110 shadow-md shadow-[#5E0ED7]/20"
+                : "bg-white border-coffee-300 text-coffee-800"
+            }`}>
+              3
+            </div>
+            <span className={`text-[10px] font-bold font-mono tracking-widest uppercase mt-2 ${
+              checkoutStep === "payment" ? "text-[#5E0ED7]" : "text-coffee-600"
+            }`}>
+              Payment
+            </span>
+          </button>
+
+        </div>
+      </div>
+
+      {/* Main interactive grid content */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Left Column: Cart items and Flipkart/Amazon style Delivery Address */}
-        <div className="lg:col-span-7 space-y-8">
-          
-          {/* Cart item listing block */}
-          <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm">
-            <h3 className="text-xl font-serif font-bold text-coffee-950 border-b border-coffee-100 pb-4 mb-5 flex items-center justify-between">
-              <span>Shopping Cart Items ({cart.length})</span>
-              <span className="text-xs font-mono font-bold text-coffee-500">₹ INR Store</span>
-            </h3>
+        {/* ==========================================
+            STEP 1: SHOPPING CART PRODUCTS ROW 
+            ========================================== */}
+        {checkoutStep === "cart" && (
+          <>
+            {/* Left side column: Cart items */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm">
+                <h3 className="text-xl font-serif font-bold text-coffee-950 border-b border-coffee-100 pb-4 mb-5 flex items-center justify-between">
+                  <span>Shopping Cart Items ({cart.length})</span>
+                  <span className="text-[10px] font-mono font-bold bg-[#5E0ED7]/5 text-[#5E0ED7] px-2.5 py-1 rounded-md">
+                    Freshness-sealed Batch
+                  </span>
+                </h3>
 
-            <div className="divide-y divide-coffee-100 space-y-5">
-              {cart.map((item) => (
-                <div key={item.product.id} className="pt-5 first:pt-0 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                  {/* Product Details Section */}
-                  <div className="flex gap-4 items-center">
-                    <img 
-                      src={item.product.image} 
-                      alt={item.product.name} 
-                      className="w-16 h-16 rounded-xl object-cover border border-coffee-200"
-                    />
-                    <div>
-                      <h4 className="text-sm font-bold text-coffee-950">{item.product.name}</h4>
-                      <p className="text-[11px] text-coffee-500 max-w-[280px] line-clamp-1 mt-0.5">{item.product.tagline}</p>
-                      
-                      {/* Chips */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[9px] font-mono font-bold bg-coffee-100 text-coffee-900 px-2 py-0.5 rounded-md uppercase">
-                          {item.product.roastLevel} Roast
-                        </span>
-                        <span className="text-[9px] font-mono font-bold bg-purple-50 text-[#5E0ED7] px-2 py-0.5 rounded-md">
-                          0.0% Caffeine
-                        </span>
+                <div className="divide-y divide-coffee-100 space-y-5">
+                  {cart.map((item) => (
+                    <div key={item.product.id} className="pt-5 first:pt-0 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                      {/* Product Details Section */}
+                      <div className="flex gap-4 items-center">
+                        <img 
+                          src={item.product.image} 
+                          alt={item.product.name} 
+                          className="w-16 h-16 rounded-xl object-cover border border-coffee-200"
+                        />
+                        <div>
+                          <h4 className="text-sm font-bold text-coffee-950">{item.product.name}</h4>
+                          <p className="text-[11px] text-coffee-500 max-w-[280px] line-clamp-1 mt-0.5">{item.product.tagline}</p>
+                          
+                          {/* Chips */}
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-[9px] font-mono font-bold bg-coffee-100 text-coffee-900 px-2 py-0.5 rounded-md uppercase">
+                              {item.product.roastLevel} Roast
+                            </span>
+                            <span className="text-[9px] font-mono font-bold bg-purple-50 text-[#5E0ED7] px-2 py-0.5 rounded-md">
+                              0.0% Caffeine
+                            </span>
+                          </div>
+                        </div>
                       </div>
+
+                      {/* Quantity Actions & Raw Price */}
+                      <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-3 sm:pt-0">
+                        <div className="flex items-center bg-coffee-50 border border-coffee-200 rounded-lg p-0.5">
+                          <button
+                            onClick={() => onUpdateQuantity(item.product.id, -1)}
+                            className="px-2 py-1 text-coffee-700 hover:text-coffee-950 hover:bg-coffee-200 rounded-md transition-colors"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="px-3.5 text-xs font-bold font-mono text-coffee-950">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => onUpdateQuantity(item.product.id, 1)}
+                            className="px-2 py-1 text-coffee-700 hover:text-coffee-950 hover:bg-coffee-200 rounded-md transition-colors"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-sm font-bold font-mono text-coffee-950">
+                            ₹{item.product.price * item.quantity}
+                          </p>
+                          <p className="text-[10px] text-coffee-500">
+                            (₹{item.product.price} / pack)
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => onRemoveItem(item.product.id)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                          title="Remove product"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right side column: Promo & Subtotal */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              {/* Promo Coupon Card */}
+              <div className="bg-white rounded-2xl border border-coffee-200 p-5 shadow-sm">
+                <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[#5E0ED7] flex items-center gap-1.5 mb-3.5">
+                  <Ticket className="w-4 h-4 text-inherit" />
+                  <span>Have a Discount Promo Coupon?</span>
+                </h4>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="CELEBRATE or SHANTIBREW"
+                    value={coupon}
+                    onChange={(e) => setCoupon(e.target.value)}
+                    className="flex-grow bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none uppercase font-mono tracking-widest focus:border-[#5E0ED7] focus:bg-white transition-all"
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    className="bg-coffee-950 text-[#FAF6F0] hover:bg-coffee-900 px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider cursor-pointer uppercase transition-colors shrink-0"
+                  >
+                    Apply
+                  </button>
+                </div>
+
+                {/* Hint buttons */}
+                <div className="flex gap-2.5 mt-3 flex-wrap">
+                  <button 
+                    onClick={() => setCoupon("CELEBRATE")}
+                    className="text-[9px] font-mono font-bold bg-purple-50 text-[#5E0ED7] hover:bg-[#5E0ED7]/10 transition-all border border-[#5E0ED7]/15 py-1 px-2 rounded-lg cursor-pointer align-middle"
+                  >
+                    CELEBRATE (10% OFF)
+                  </button>
+                  {totals.subtotal >= 700 && (
+                    <button 
+                      onClick={() => setCoupon("SHANTIBREW")}
+                      className="text-[9px] font-mono font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 transition-all border border-amber-200 py-1 px-2 rounded-lg cursor-pointer align-middle"
+                    >
+                      SHANTIBREW (₹100 OFF)
+                    </button>
+                  )}
+                </div>
+
+                {couponError && (
+                  <p className="text-[11px] font-medium text-red-500 mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>{couponError}</span>
+                  </p>
+                )}
+
+                {activeCoupon && (
+                  <div className="mt-3.5 p-3 rounded-xl bg-green-50 border border-green-200 flex justify-between items-center text-xs text-green-950">
+                    <div className="flex items-center gap-1.5 font-semibold text-green-800">
+                      <Check className="w-4 h-4 text-green-600 font-bold" />
+                      <span>Coupon {activeCoupon.code} applied successfully!</span>
+                    </div>
+                    <button
+                      onClick={() => setActiveCoupon(null)}
+                      className="text-[10px] uppercase font-bold text-green-900 hover:underline cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Subtotal Order Summary Box & Proceed button */}
+              <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm space-y-4 text-coffee-950">
+                <h3 className="text-sm font-serif font-bold border-b border-coffee-100 pb-3 flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-coffee-900" />
+                  <span>Cart Subtotal Billing</span>
+                </h3>
+
+                <div className="space-y-3 text-xs text-coffee-800">
+                  <div className="flex justify-between font-medium">
+                    <span>Items Subtotal</span>
+                    <span className="font-mono font-bold">₹{totals.subtotal}</span>
+                  </div>
+
+                  {totals.discount > 0 && (
+                    <div className="flex justify-between text-green-700 font-semibold">
+                      <span>Coupon Discount</span>
+                      <span className="font-mono">- ₹{totals.discount}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between font-medium">
+                    <span>GST Tax (exactly 5%)</span>
+                    <span className="font-mono font-bold">₹{totals.gstAmount}</span>
+                  </div>
+
+                  <div className="flex justify-between font-medium">
+                    <span>Delivery Charges</span>
+                    <span className="font-mono font-bold">
+                      {totals.shippingCharge === 0 ? "FREE" : `₹${totals.shippingCharge}`}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-baseline border-t border-coffee-200 pt-4 text-sm font-serif font-bold text-coffee-950">
+                    <span>Estimated Total</span>
+                    <span className="font-mono text-lg text-[#5E0ED7] font-extrabold">₹{totals.finalAmount}</span>
+                  </div>
+                </div>
+
+                {submitError && (
+                  <p className="text-[11px] font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-150 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{submitError}</span>
+                  </p>
+                )}
+
+                {/* Big Proceed Checkout CTA */}
+                <button
+                  onClick={() => {
+                    if (!currentUser) {
+                      setSubmitError("Please Login or Sign Up first to save your profile and shipping details.");
+                      onOpenLogin();
+                      return;
+                    }
+                    setSubmitError("");
+                    setCheckoutStep("address");
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-[#5E0ED7] to-purple-600 hover:from-[#5E0ED7]/90 hover:to-purple-700 text-white rounded-xl text-xs font-bold font-mono tracking-widest uppercase flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-[#5E0ED7]/15 transition-all"
+                >
+                  <span>PROCEED TO SHIFTING ADDRESS</span>
+                  <ChevronRight className="w-4.5 h-4.5" />
+                </button>
+
+                <p className="text-[10px] text-center text-coffee-500 font-sans mt-2">
+                  🛡️ Securely processed with Cashfree High-Security PG
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ==========================================
+            STEP 2: MINIMAL ADAPTIVE DELIVERY ADDRESS 
+            ========================================== */}
+        {checkoutStep === "address" && (
+          <>
+            {/* Left column: proper address fields */}
+            <div className="lg:col-span-7 space-y-8">
+              <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm space-y-6">
+                
+                {/* Header info */}
+                <div className="border-b border-coffee-100 pb-4">
+                  <span className="text-[9px] font-mono font-bold text-[#5E0ED7] uppercase tracking-widest bg-purple-50 px-2 py-0.5 rounded-md">
+                    Secure Delivery Dispatch
+                  </span>
+                  <h3 className="text-xl font-serif font-bold text-coffee-950 mt-1.5">
+                    Shipping Address details
+                  </h3>
+                  <p className="text-xs text-coffee-600 mt-0.5">
+                    Please provide Pincode to automatically populate village, town, and state details.
+                  </p>
+                </div>
+
+                {submitError && (
+                  <div className="bg-red-50 text-red-700 p-3.5 rounded-xl border border-red-150 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle className="w-4.5 h-4.5 shrink-0" />
+                    <span>{submitError}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  
+                  {/* Pin Code input field FIRST */}
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-950 block" htmlFor="pincode">
+                      6-Digit PIN Code <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="pincode"
+                        type="text"
+                        placeholder="e.g. 577101 (Automatically fetches location)"
+                        maxLength={6}
+                        value={pincode}
+                        onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
+                        className="w-full bg-purple-50/20 border border-coffee-250 rounded-xl px-11 py-3 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-mono font-bold focus:ring-1 focus:ring-[#5E0ED7]/15"
+                      />
+                      <MapPin className="w-4.5 h-4.5 text-[#5E0ED7] absolute left-4 top-1/2 -translate-y-1/2" />
+                      {isFetchingPincode && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-xs text-[#5E0ED7] font-mono font-bold">
+                          <span className="w-3.5 h-3.5 border-2 border-[#5E0ED7] border-t-transparent rounded-full animate-spin"></span>
+                          <span>Fetching...</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Quantity Actions & Raw Price */}
-                  <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-3 sm:pt-0">
-                    <div className="flex items-center bg-coffee-50 border border-coffee-200 rounded-lg p-0.5">
-                      <button
-                        onClick={() => onUpdateQuantity(item.product.id, -1)}
-                        className="px-2 py-1 text-coffee-700 hover:text-coffee-950 hover:bg-coffee-200 rounded-md transition-colors"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="px-3.5 text-xs font-bold font-mono text-coffee-950">
-                        {item.quantity}
+                  {/* Village selection/Manual input */}
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-950 block" htmlFor="address_line2">
+                      Village, Area, colony, street (Gaw Name) <span className="text-red-500">*</span>
+                    </label>
+                    {fetchedVillages.length > 0 ? (
+                      <div className="space-y-2">
+                        <select
+                          id="address_line2_select"
+                          value={addressLine2}
+                          onChange={(e) => setAddressLine2(e.target.value)}
+                          className="w-full bg-white border-2 border-coffee-200 rounded-xl px-3.5 py-3 text-xs text-coffee-950 font-medium outline-none focus:border-[#5E0ED7] transition-all"
+                        >
+                          <option value="">-- Choose Local Village/Area --</option>
+                          {fetchedVillages.map((village, idx) => (
+                            <option key={`${village}-${idx}`} value={village}>
+                              {village}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10px] text-coffee-500 italic block">
+                          Or edit selected Village/Gaw details below:
+                        </p>
+                        <input
+                          id="address_line2"
+                          type="text"
+                          placeholder="Or type village name manually..."
+                          value={addressLine2}
+                          onChange={(e) => setAddressLine2(e.target.value)}
+                          className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans"
+                        />
+                      </div>
+                    ) : (
+                      <input
+                        id="address_line2"
+                        type="text"
+                        placeholder="e.g. Village name, Area, Colony, Street, Sector"
+                        value={addressLine2}
+                        onChange={(e) => setAddressLine2(e.target.value)}
+                        className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
+                      />
+                    )}
+                  </div>
+
+                  {/* Town / City and State (Auto fetched but editable) */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="city_field">
+                      Town / City <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="city_field"
+                      type="text"
+                      placeholder="Town / District"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="state_field">
+                      State <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="state_field"
+                      type="text"
+                      placeholder="State name"
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
+                    />
+                  </div>
+
+                  {/* Full Name */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-950 block" htmlFor="full_name">
+                      Consignee Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="full_name"
+                      type="text"
+                      placeholder="e.g. Vaidehi Deshmukh"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
+                    />
+                  </div>
+
+                  {/* Mobile phone number */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-950 block" htmlFor="phone_number">
+                      10-Digit Mobile Number <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-coffee-500 select-none">
+                        +91
                       </span>
-                      <button
-                        onClick={() => onUpdateQuantity(item.product.id, 1)}
-                        className="px-2 py-1 text-coffee-700 hover:text-coffee-950 hover:bg-coffee-200 rounded-md transition-colors"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
+                      <input
+                        id="phone_number"
+                        type="tel"
+                        placeholder="98765 43210"
+                        maxLength={10}
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+                        className="w-full bg-coffee-50 border border-coffee-250 rounded-xl pl-12 pr-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-mono"
+                      />
                     </div>
+                  </div>
 
-                    <div className="text-right">
-                      <p className="text-sm font-bold font-mono text-coffee-950">
-                        ₹{item.product.price * item.quantity}
-                      </p>
-                      <p className="text-[10px] text-coffee-500">
-                        (₹{item.product.price} / pack)
-                      </p>
-                    </div>
+                  {/* Flat, House no. */}
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-950 block" htmlFor="address_line1">
+                      Flat, House no., Building or Apartment Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="address_line1"
+                      type="text"
+                      placeholder="e.g. Flat 301, 3rd Floor, Shanti Residency"
+                      value={addressLine1}
+                      onChange={(e) => setAddressLine1(e.target.value)}
+                      className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
+                    />
+                  </div>
 
+                  {/* Landmark - Optional */}
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="landmark">
+                      Landmark <span className="text-coffee-400 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      id="landmark"
+                      type="text"
+                      placeholder="e.g. Near Central Post Office, Hanuman Mandir"
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
+                    />
+                  </div>
+
+                </div>
+
+                {/* Place Type (Home vs Work/Office) */}
+                <div className="space-y-1.5 pt-2 border-t border-coffee-100">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-coffee-950 block">
+                    Address Type / Location Category
+                  </span>
+                  <div className="flex gap-3">
                     <button
-                      onClick={() => onRemoveItem(item.product.id)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                      title="Remove product"
+                      type="button"
+                      onClick={() => setAddressType("Home")}
+                      className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-semibold cursor-pointer transition-all ${
+                        addressType === "Home"
+                          ? "bg-coffee-900 text-[#FAF6F0] border-coffee-900 shadow-sm"
+                          : "bg-white text-coffee-700 border-coffee-250 hover:bg-coffee-50"
+                      }`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Home className="w-3.5 h-3.5" />
+                      <span>Home (Delivery all day)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAddressType("Work")}
+                      className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-semibold cursor-pointer transition-all ${
+                        addressType === "Work"
+                          ? "bg-coffee-900 text-[#FAF6F0] border-coffee-900 shadow-sm"
+                          : "bg-white text-coffee-700 border-coffee-250 hover:bg-coffee-50"
+                      }`}
+                    >
+                      <Briefcase className="w-3.5 h-3.5" />
+                      <span>Work / Office (10 AM - 5 PM)</span>
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Flipkart / Amazon Style Delivery Address Section */}
-          <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm space-y-5">
-            <div className="border-b border-coffee-100 pb-4 mb-2">
-              <span className="text-[10px] font-mono font-bold text-[#5E0ED7] uppercase tracking-wider">
-                PAN-INDIA DELIVERY REGISTRY
-              </span>
-              <h3 className="text-xl font-serif font-bold text-coffee-950 mt-0.5">
-                Add Shipping Delivery Address
-              </h3>
-              <p className="text-xs text-coffee-600">
-                Your order is safely dispatched via Delhivery / Bluedart Express with protective seals.
-              </p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Right column: Cart review & next step */}
+            <div className="lg:col-span-5 space-y-6">
               
-              {/* Name */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="full_name">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="full_name"
-                  type="text"
-                  placeholder="e.g. Vaidehi Deshmukh"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
-                />
-              </div>
-
-              {/* Mobile Phone Number */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="phone_number">
-                  10-Digit Mobile Number <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-coffee-500 select-none">
-                    +91
-                  </span>
-                  <input
-                    id="phone_number"
-                    type="tel"
-                    placeholder="98765 43210"
-                    maxLength={10}
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
-                    className="w-full bg-coffee-50 border border-coffee-250 rounded-xl pl-12 pr-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-mono"
-                  />
+              {/* Order Cart item display summary */}
+              <div className="bg-white rounded-2xl border border-coffee-200 p-5 shadow-sm">
+                <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-coffee-900 border-b border-coffee-100 pb-2 mb-3">
+                  Order Items Brief ({cart.length})
+                </h4>
+                <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+                  {cart.map((item) => (
+                    <div key={item.product.id} className="flex gap-2 items-center justify-between text-xs text-coffee-900">
+                      <div className="flex items-center gap-2 truncate">
+                        <img src={item.product.image} className="w-8 h-8 rounded-lg object-cover" />
+                        <span className="truncate font-semibold">{item.product.name} (x{item.quantity})</span>
+                      </div>
+                      <span className="font-mono font-bold shrink-0">₹{item.product.price * item.quantity}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Pin Code */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="pincode">
-                  6-Digit PIN Code <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="pincode"
-                  type="text"
-                  placeholder="e.g. 577101"
-                  maxLength={6}
-                  value={pincode}
-                  onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
-                  className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-mono focus:ring-1 focus:ring-[#5E0ED7]/15"
-                />
-              </div>
+              {/* Subtotal review and Proceed Button */}
+              <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm space-y-4">
+                <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[#5E0ED7]">
+                  Pricing Recap
+                </h4>
 
-              {/* Landmark - Optional */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="landmark">
-                  Landmark <span className="text-coffee-400 font-normal">(Optional)</span>
-                </label>
-                <input
-                  id="landmark"
-                  type="text"
-                  placeholder="e.g. Near Central Post Office"
-                  value={landmark}
-                  onChange={(e) => setLandmark(e.target.value)}
-                  className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
-                />
-              </div>
-
-            </div>
-
-            {/* Flat, House no. */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="address_line1">
-                Flat, House no., Building, Company, Apartment <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="address_line1"
-                type="text"
-                placeholder="e.g. Flat 301, 3rd Floor, Shanti Residency"
-                value={addressLine1}
-                onChange={(e) => setAddressLine1(e.target.value)}
-                className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
-              />
-            </div>
-
-            {/* Area, Colony, Street */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="address_line2">
-                Area, Colony, Street, Sector, Village <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="address_line2"
-                type="text"
-                placeholder="e.g. Coffee Estate Road, 2nd Cross"
-                value={addressLine2}
-                onChange={(e) => setAddressLine2(e.target.value)}
-                className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
-              />
-            </div>
-
-            {/* Town/City and State auto fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="city_field">
-                  Town / City <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="city_field"
-                  type="text"
-                  placeholder="Bengaluru"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block" htmlFor="state_field">
-                  State <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="state_field"
-                  type="text"
-                  placeholder="Karnataka"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  className="w-full bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none focus:border-[#5E0ED7] focus:bg-white transition-all font-sans font-medium"
-                />
-              </div>
-            </div>
-
-            {/* Address Type (Home vs Work/Office) */}
-            <div className="space-y-1.5 pt-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block">
-                Address Type / Location
-              </span>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAddressType("Home")}
-                  className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-                    addressType === "Home"
-                      ? "bg-coffee-900 text-[#FAF6F0] border-coffee-900 shadow-sm"
-                      : "bg-white text-coffee-700 border-coffee-250 hover:bg-coffee-50"
-                  }`}
-                >
-                  <Home className="w-3.5 h-3.5" />
-                  <span>Home (Delivery all day)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAddressType("Work")}
-                  className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer transition-all ${
-                    addressType === "Work"
-                      ? "bg-coffee-900 text-[#FAF6F0] border-coffee-900 shadow-sm"
-                      : "bg-white text-coffee-700 border-coffee-250 hover:bg-coffee-50"
-                  }`}
-                >
-                  <Briefcase className="w-3.5 h-3.5" />
-                  <span>Work / Office (10 AM - 5 PM)</span>
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* Right Column: Dynamic summary and exactly 5% GST line item */}
-        <div className="lg:col-span-5 space-y-6">
-          
-          {/* Coupon applying */}
-          <div className="bg-white rounded-2xl border border-coffee-200 p-5 shadow-sm">
-            <h4 className="text-xs font-bold font-mono uppercase tracking-wider text-[#5E0ED7] flex items-center gap-1.5 mb-3.5">
-              <Ticket className="w-4 h-4 text-inherit" />
-              <span>Have a Discount Promo Coupon?</span>
-            </h4>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="CELEBRATE or SHANTIBREW"
-                value={coupon}
-                onChange={(e) => setCoupon(e.target.value)}
-                className="flex-grow bg-coffee-50 border border-coffee-250 rounded-xl px-3.5 py-2.5 text-xs text-coffee-950 outline-none uppercase font-mono tracking-widest focus:border-[#5E0ED7] focus:bg-white transition-all"
-              />
-              <button
-                onClick={handleApplyCoupon}
-                className="bg-coffee-950 text-[#FAF6F0] hover:bg-coffee-900 px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider cursor-pointer uppercase transition-colors shrink-0"
-              >
-                Apply
-              </button>
-            </div>
-
-            {/* Hint buttons */}
-            <div className="flex gap-2.5 mt-3 flex-wrap">
-              <button 
-                onClick={() => setCoupon("CELEBRATE")}
-                className="text-[9px] font-mono font-bold bg-purple-50 text-[#5E0ED7] hover:bg-[#5E0ED7]/10 transition-all border border-[#5E0ED7]/15 py-1 px-2 rounded-lg cursor-pointer align-middle"
-              >
-                CELEBRATE (10% OFF)
-              </button>
-              {totals.subtotal >= 700 && (
-                <button 
-                  onClick={() => setCoupon("SHANTIBREW")}
-                  className="text-[9px] font-mono font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 transition-all border border-amber-200 py-1 px-2 rounded-lg cursor-pointer align-middle"
-                >
-                  SHANTIBREW (₹100 OFF)
-                </button>
-              )}
-            </div>
-
-            {couponError && (
-              <p className="text-[11px] font-medium text-red-500 mt-2 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5" />
-                <span>{couponError}</span>
-              </p>
-            )}
-
-            {activeCoupon && (
-              <div className="mt-3.5 p-3 rounded-xl bg-green-50 border border-green-200 flex justify-between items-center text-xs text-green-950">
-                <div className="flex items-center gap-1.5 font-semibold text-green-800">
-                  <Check className="w-4 h-4 text-green-600 font-bold" />
-                  <span>Coupon {activeCoupon.code} applied successfully!</span>
-                </div>
-                <button
-                  onClick={() => setActiveCoupon(null)}
-                  className="text-[10px] uppercase font-bold text-green-900 hover:underline cursor-pointer"
-                >
-                  Remove
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Pricing detail breakdown sheet with exactly 5% GST and delivery triggers */}
-          <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm space-y-4 text-coffee-950">
-            <h3 className="text-md font-serif font-bold border-b border-coffee-100 pb-3 flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-coffee-900" />
-              <span>Checkout Invoice Detail</span>
-            </h3>
-
-            <div className="space-y-3 font-medium text-xs text-coffee-800">
-              
-              {/* Basket Price */}
-              <div className="flex justify-between">
-                <span>Items Subtotal</span>
-                <span className="font-mono font-bold">₹{totals.subtotal}</span>
-              </div>
-
-              {/* Discount if active */}
-              {totals.discount > 0 && (
-                <div className="flex justify-between text-green-700">
-                  <span>Coupon Discount ({activeCoupon?.code})</span>
-                  <span className="font-mono font-bold">- ₹{totals.discount}</span>
-                </div>
-              )}
-
-              {/* 5% GST Line - VERY IMPORTANT */}
-              <div className="flex justify-between border-t border-coffee-100/60 pt-3">
-                <div className="space-y-0.5">
-                  <span className="text-coffee-900 block font-bold">GST Tax (exactly 5%)</span>
-                  <span className="text-[10px] text-coffee-500 block leading-none font-normal">
-                    Assessed dynamically at 5% on ₹{totals.priceAfterDiscount}
-                  </span>
-                </div>
-                <span className="font-mono font-bold text-coffee-900">₹{totals.gstAmount}</span>
-              </div>
-
-              {/* Express Shipping with limit banner */}
-              <div className="flex justify-between items-center border-t border-coffee-100/60 pt-3">
-                <div>
-                  <span className="text-coffee-900 block">Express Delivery Charges</span>
-                  {totals.subtotal > 499 ? (
-                    <span className="text-[10px] text-green-700 block leading-none font-bold">
-                      FREE EXPRESS SHIPPING ACTIVE
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-orange-700 block leading-none font-normal">
-                      Add ₹{499 - totals.subtotal} more for Free Shipping
-                    </span>
+                <div className="space-y-2 text-xs text-coffee-800">
+                  <div className="flex justify-between">
+                    <span>Items Subtotal</span>
+                    <span className="font-mono">₹{totals.subtotal}</span>
+                  </div>
+                  {totals.discount > 0 && (
+                    <div className="flex justify-between text-[#5E0ED7]">
+                      <span>Coupon Saved</span>
+                      <span className="font-mono font-bold">- ₹{totals.discount}</span>
+                    </div>
                   )}
+                  <div className="flex justify-between text-xs font-serif font-bold text-coffee-950 border-t border-coffee-100 pt-2.5">
+                    <span>Final Payable (Estim.)</span>
+                    <span className="font-mono text-[#5E0ED7]">₹{totals.finalAmount}</span>
+                  </div>
                 </div>
-                <span className="font-mono font-bold">
-                  {totals.shippingCharge === 0 ? "FREE" : `₹${totals.shippingCharge}`}
-                </span>
-              </div>
 
-              {/* Final Payable Amount */}
-              <div className="flex justify-between items-baseline border-t border-coffee-200 pt-4 text-base font-serif font-bold text-coffee-950">
-                <span>Grand Total (Payable)</span>
-                <span className="font-mono text-xl text-[#5E0ED7] font-extrabold">₹{totals.finalAmount}</span>
-              </div>
-
-            </div>
-
-            {/* PAYMENT METHOD SELECTOR */}
-            <div className="border-t border-coffee-105 pt-4 space-y-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-coffee-900 block">
-                Select Payment Option
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Big Next Step Trigger buttons */}
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod("online")}
-                  disabled={isProcessingPay}
-                  className={`flex flex-col items-start p-3.5 border-2 rounded-xl text-left cursor-pointer transition-all ${
-                    paymentMethod === "online"
-                      ? "bg-purple-50/40 border-[#5E0ED7] text-coffee-950 shadow-sm"
-                      : "bg-white border-slate-200 hover:bg-slate-50 text-coffee-700"
-                  }`}
+                  onClick={() => {
+                    setSubmitError("");
+                    if (!fullName.trim()) {
+                      setSubmitError("Please fill in Full Name.");
+                      return;
+                    }
+                    if (!phoneNumber || phoneNumber.length < 10) {
+                      setSubmitError("Please specify correct 10-Digit Mobile Number.");
+                      return;
+                    }
+                    if (!pincode || pincode.length !== 6) {
+                      setSubmitError("Please type correct 6-digit PIN code.");
+                      return;
+                    }
+                    if (!addressLine2.trim()) {
+                      setSubmitError("Please complete your Village or Street details.");
+                      return;
+                    }
+                    if (!addressLine1.trim()) {
+                      setSubmitError("Please complete your Flat or House details.");
+                      return;
+                    }
+                    if (!city.trim()) {
+                      setSubmitError("Please enter Town or City.");
+                      return;
+                    }
+                    if (!state.trim()) {
+                      setSubmitError("Please enter State.");
+                      return;
+                    }
+                    setCheckoutStep("payment");
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-coffee-950 to-coffee-900 hover:from-coffee-900 hover:to-coffee-850 text-white rounded-xl text-xs font-bold font-mono tracking-widest uppercase flex items-center justify-center gap-2 cursor-pointer shadow-lg transition-all"
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentMethod === "online" ? "border-[#5E0ED7]" : "border-slate-300"}`}>
-                      {paymentMethod === "online" && <span className="w-2 h-2 rounded-full bg-[#5E0ED7]" />}
-                    </span>
-                    <span className="text-xs font-bold tracking-tight">Pay Online (Secure)</span>
-                  </div>
-                  <span className="text-[10px] text-coffee-500 font-mono leading-tight pl-5">
-                    UPI, Credit/Debit Card, Netbanking with Cashfree Gateway
-                  </span>
+                  <span>NEXT: PROCEED TO PAYMENT</span>
+                  <ChevronRight className="w-4 h-4" />
                 </button>
+              </div>
 
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("cod")}
-                  disabled={isProcessingPay}
-                  className={`flex flex-col items-start p-3.5 border-2 rounded-xl text-left cursor-pointer transition-all ${
-                    paymentMethod === "cod"
-                      ? "bg-purple-50/40 border-[#5E0ED7] text-coffee-950 shadow-sm"
-                      : "bg-white border-slate-200 hover:bg-slate-50 text-coffee-700"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${paymentMethod === "cod" ? "border-[#5E0ED7]" : "border-slate-300"}`}>
-                      {paymentMethod === "cod" && <span className="w-2 h-2 rounded-full bg-[#5E0ED7]" />}
-                    </span>
-                    <span className="text-xs font-bold tracking-tight">Cash On Delivery</span>
-                  </div>
-                  <span className="text-[10px] text-coffee-500 font-mono leading-tight pl-5">
-                    Pay with Cash or UPI upon physical package delivery
+            </div>
+          </>
+        )}
+
+        {/* ==========================================
+            STEP 3: SECURE PAYMENT SELECTION (COD/ONLINE) 
+            ========================================== */}
+        {checkoutStep === "payment" && (
+          <>
+            {/* Left Column: Ask payment type */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm space-y-6">
+                
+                <div className="border-b border-coffee-100 pb-4">
+                  <span className="text-[9px] font-mono font-bold text-[#5E0ED7] uppercase tracking-widest bg-purple-50 px-2 py-0.5 rounded-md">
+                    Payment Gateway Security
                   </span>
-                </button>
+                  <h3 className="text-xl font-serif font-bold text-coffee-950 mt-1.5">
+                    Choose Your Preferred Payment Option
+                  </h3>
+                  <p className="text-xs text-coffee-600">
+                    We support secure instant online transactions or payment upon safe physical box delivery.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  
+                  {/* Option 1: Secure Cashfree Online PG */}
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("online")}
+                    disabled={isProcessingPay}
+                    className={`w-full flex items-start gap-4 p-4 border-2 rounded-2xl text-left cursor-pointer transition-all ${
+                      paymentMethod === "online"
+                        ? "bg-purple-50/20 border-[#5E0ED7] text-coffee-950 shadow-sm"
+                        : "bg-white border-coffee-200 hover:bg-coffee-50/50 text-coffee-700"
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${paymentMethod === "online" ? "border-[#5E0ED7]" : "border-coffee-300"}`}>
+                      {paymentMethod === "online" && <span className="w-3 h-3 rounded-full bg-[#5E0ED7]" />}
+                    </span>
+                    <div className="space-y-1">
+                      <span className="text-sm font-bold block text-coffee-950 flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-[#5E0ED7]" />
+                        Pay Online Instantly
+                      </span>
+                      <p className="text-xs text-coffee-600 leading-relaxed">
+                        Cards (Visa/Mastercard/Rupay), UPI Apps (Google Pay, PhonePe, Paytm, BHIM), and Netbanking via encrypted Cashfree network.
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Option 2: Cash On Delivery (COD) */}
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("cod")}
+                    disabled={isProcessingPay}
+                    className={`w-full flex items-start gap-4 p-4 border-2 rounded-2xl text-left cursor-pointer transition-all ${
+                      paymentMethod === "cod"
+                        ? "bg-purple-50/20 border-[#5E0ED7] text-coffee-950 shadow-sm"
+                        : "bg-white border-coffee-200 hover:bg-coffee-50/50 text-coffee-700"
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${paymentMethod === "cod" ? "border-[#5E0ED7]" : "border-coffee-300"}`}>
+                      {paymentMethod === "cod" && <span className="w-3 h-3 rounded-full bg-[#5E0ED7]" />}
+                    </span>
+                    <div className="space-y-1">
+                      <span className="text-sm font-bold block text-coffee-950 flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-emerald-600" />
+                        Cash On Delivery (COD)
+                      </span>
+                      <p className="text-xs text-coffee-600 leading-relaxed">
+                        Choose to pay with physical Cash or UPI scanner code when Delhivery / Bluedart rider safely delivers your parcel at your doorstep.
+                      </p>
+                    </div>
+                  </button>
+
+                </div>
+
+                {/* Back Link */}
+                <div className="pt-3">
+                  <button
+                    onClick={() => setCheckoutStep("address")}
+                    className="text-xs font-bold font-mono uppercase text-[#5E0ED7] hover:underline"
+                  >
+                    ← Edit Shipping address details
+                  </button>
+                </div>
+
               </div>
             </div>
 
-            {/* Error notifications */}
-            {submitError && (
-              <div className="bg-red-50 text-red-700 p-3 rounded-xl border border-red-200 text-xs font-semibold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{submitError}</span>
+            {/* Right Column: Final Subtotal invoicing and Confirm Option Button */}
+            <div className="lg:col-span-5 space-y-6">
+              
+              {/* Delivery info summary block */}
+              <div className="bg-white rounded-2xl border border-coffee-200 p-5 shadow-sm text-xs text-coffee-800">
+                <h4 className="text-xs font-bold font-mono tracking-wider uppercase text-coffee-950 border-b border-coffee-100 pb-2 mb-3">
+                  Consignee & Delivery Summary
+                </h4>
+                <div className="space-y-1.5 font-medium">
+                  <p><span className="text-coffee-500 font-normal">Deliver To:</span> {fullName}</p>
+                  <p><span className="text-coffee-500 font-normal">Contact:</span> +91 {phoneNumber}</p>
+                  <p className="line-clamp-2 leading-relaxed">
+                    <span className="text-coffee-500 font-normal font-sans">Postal Address:</span> {addressLine1}, {addressLine2} {landmark ? `(${landmark})` : ""}, {city}, {state} - <span className="font-mono font-bold text-coffee-950">{pincode}</span>
+                  </p>
+                </div>
               </div>
-            )}
 
-            {/* DYNAMIC CHECKOUT ACTION BUTTON */}
-            {paymentMethod === "online" ? (
-              <button
-                onClick={handlePayNow}
-                disabled={isProcessingPay}
-                className={`w-full py-4 rounded-xl text-xs font-bold font-mono tracking-widest uppercase flex items-center justify-center gap-2.5 cursor-pointer shadow-lg transition-all ${
-                  isProcessingPay
-                    ? "bg-coffee-900 text-coffee-300 cursor-not-allowed animate-pulse"
-                    : "bg-gradient-to-r from-[#5E0ED7] to-purple-600 hover:from-[#5E0ED7]/90 hover:to-purple-700 text-white shadow-[#5E0ED7]/15"
-                }`}
-              >
-                <CreditCard className="w-4.5 h-4.5" />
-                <span>{isProcessingPay ? "Processing Secure Gateway..." : `Pay ₹${totals.finalAmount} via Cashfree PG`}</span>
-              </button>
-            ) : (
-              <button
-                onClick={handlePlaceCodOrder}
-                disabled={isProcessingPay}
-                className={`w-full py-4 rounded-xl text-xs font-bold font-mono tracking-widest uppercase flex items-center justify-center gap-2.5 cursor-pointer shadow-lg transition-all ${
-                  isProcessingPay
-                    ? "bg-coffee-900 text-coffee-300 cursor-not-allowed animate-pulse"
-                    : "bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-emerald-600/15"
-                }`}
-              >
-                <Truck className="w-4.5 h-4.5" />
-                <span>{isProcessingPay ? "Placing COD Order..." : `Confirm COD Order (₹${totals.finalAmount})`}</span>
-              </button>
-            )}
+              {/* Pricing breakdown and Confirm Action button */}
+              <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm space-y-5 text-coffee-950">
+                <h3 className="text-sm font-serif font-bold border-b border-coffee-100 pb-3 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-coffee-900" />
+                  <span>Interactive Checkout Token Invoice</span>
+                </h3>
 
-            {/* Additional Safety trust badges */}
-            <div className="pt-3 border-t border-coffee-100 text-[10px] font-mono text-coffee-500 space-y-1.5 select-none text-center">
-              <div className="flex items-center justify-center gap-1.5 text-coffee-700">
-                <MapPin className="w-3.5 h-3.5" />
-                <span>Ships securely to Bengaluru, Mumbai, Delhi, & 24,000+ codes</span>
+                <div className="space-y-3.5 text-xs text-coffee-850">
+                  <div className="flex justify-between">
+                    <span>Items Subtotal</span>
+                    <span className="font-mono font-bold">₹{totals.subtotal}</span>
+                  </div>
+
+                  {totals.discount > 0 && (
+                    <div className="flex justify-between text-green-700">
+                      <span>Applied Coupon Less</span>
+                      <span className="font-mono font-bold">- ₹{totals.discount}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between pt-2 border-t border-coffee-100/60">
+                    <div className="space-y-0.5">
+                      <span className="font-bold">GST Tax (exactly 5%)</span>
+                      <span className="text-[10px] text-coffee-500 block leading-tight">
+                        5% levy assessed on ₹{totals.priceAfterDiscount}
+                      </span>
+                    </div>
+                    <span className="font-mono font-bold">₹{totals.gstAmount}</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>Express Fast Shipping</span>
+                    <span className="font-mono font-bold">
+                      {totals.shippingCharge === 0 ? "FREE" : `₹${totals.shippingCharge}`}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-baseline border-t border-coffee-200 pt-4 text-base font-serif font-bold text-coffee-950">
+                    <span>Grand Total Payable</span>
+                    <span className="font-mono text-xl text-[#5E0ED7] font-extrabold">₹{totals.finalAmount}</span>
+                  </div>
+                </div>
+
+                {/* Submit errors inside Invoice box */}
+                {submitError && (
+                  <div className="bg-red-50 text-red-700 p-3 rounded-xl border border-red-200 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{submitError}</span>
+                  </div>
+                )}
+
+                {/* Confirm Action Button */}
+                {paymentMethod === "online" ? (
+                  <button
+                    onClick={handlePayNow}
+                    disabled={isProcessingPay}
+                    className={`w-full py-4 rounded-xl text-xs font-bold font-mono tracking-widest uppercase flex items-center justify-center gap-2.5 cursor-pointer shadow-lg transition-all ${
+                      isProcessingPay
+                        ? "bg-coffee-900 text-coffee-300 cursor-not-allowed animate-pulse"
+                        : "bg-gradient-to-r from-[#5E0ED7] to-purple-600 hover:from-[#5E0ED7]/90 hover:to-purple-700 text-white shadow-[#5E0ED7]/15"
+                    }`}
+                  >
+                    <CreditCard className="w-4.5 h-4.5" />
+                    <span>{isProcessingPay ? "Processing Secure Gateway..." : `Confirm & Pay ₹${totals.finalAmount}`}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handlePlaceCodOrder}
+                    disabled={isProcessingPay}
+                    className={`w-full py-4 rounded-xl text-xs font-bold font-mono tracking-widest uppercase flex items-center justify-center gap-2.5 cursor-pointer shadow-lg transition-all ${
+                      isProcessingPay
+                        ? "bg-coffee-900 text-coffee-300 cursor-not-allowed animate-pulse"
+                        : "bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-emerald-600/15"
+                    }`}
+                  >
+                    <Truck className="w-4.5 h-4.5" />
+                    <span>{isProcessingPay ? "Logging COD Request..." : `Confirm COD Order (₹${totals.finalAmount})`}</span>
+                  </button>
+                )}
+
+                {/* Privacy Badge */}
+                <div className="pt-3 border-t border-coffee-100 text-[9px] font-mono text-coffee-500 space-y-1 text-center">
+                  <p>🔒 End-to-end safe connection guaranteed by PCI-DSS</p>
+                </div>
+
               </div>
-              <p>🔒 PCI-DSS Compliant 256-bit Secure Banking Layer verified</p>
+
             </div>
-
-          </div>
-
-        </div>
+          </>
+        )}
 
       </div>
 

@@ -937,19 +937,65 @@ export default function AdminPanel({ currentUser, onProductsUpdated, heroImages,
                   />
                 </div>
 
-                {/* Photo Input (Asked specifically by user: Change product photos) */}
-                <div className="space-y-1.5">
-                  <label className="block text-coffee-900 font-bold uppercase tracking-wider font-mono text-[9px] flex items-center gap-1">
-                    <Image className="w-3 h-3 text-accent-darkgold" /> Product Photo URL
+                {/* Photo Input (Asked specifically by user: Change product photos from mobile gallery / files) */}
+                <div className="space-y-3 bg-[#FAF6F0]/50 p-3.5 rounded-2xl border border-coffee-200">
+                  <label className="block text-stone-800 font-bold uppercase tracking-wider font-mono text-[9px] flex items-center gap-1">
+                    <Image className="w-3.5 h-3.5 text-[#B4942B]" /> Product Image Source
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={productImage}
-                    onChange={(e) => setProductImage(e.target.value)}
-                    placeholder="Paste clean direct Unsplash image URL..."
-                    className="w-full px-3.5 py-2.5 bg-[#FAF6F0] rounded-xl border border-coffee-200 outline-none focus:border-accent-gold font-mono block"
-                  />
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                    {/* Option 1: File Input from Gallery */}
+                    <div className="space-y-1">
+                      <span className="block text-[10px] text-stone-500 font-medium">Upload from Mobile Gallery:</span>
+                      <label className="flex items-center justify-center border-2 border-dashed border-stone-300 hover:border-[#B4942B] rounded-xl p-3 bg-white cursor-pointer hover:bg-stone-50 transition-all text-[11px] text-stone-700 font-semibold gap-1.5 min-h-[44px]">
+                        <PlusCircle className="w-4 h-4 text-[#B4942B]" /> Choose Photo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setProductImage(reader.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Option 2: Image URL direct entry */}
+                    <div className="space-y-1">
+                      <span className="block text-[10px] text-stone-500 font-medium">Or Paste Direct Photo URL:</span>
+                      <input
+                        type="text"
+                        value={productImage?.startsWith("data:") ? "" : productImage}
+                        onChange={(e) => setProductImage(e.target.value)}
+                        placeholder="https://images.unsplash.com/..."
+                        className="w-full px-3 py-2 bg-white rounded-xl border border-stone-200 text-[11px] outline-none focus:border-[#B4942B] font-mono min-h-[44px]"
+                      />
+                    </div>
+                  </div>
+
+                  {productImage && (
+                    <div className="flex items-center gap-2.5 pt-2 border-t border-stone-200/50">
+                      <img src={productImage} alt="Preview" className="w-12 h-12 object-cover rounded-xl border border-stone-200" />
+                      <div className="text-[10px] text-stone-500 min-w-0 flex-1">
+                        <span className="block font-bold text-stone-800">Current Image Chosen</span>
+                        <span className="block truncate font-mono">{productImage.startsWith("data:") ? "Custom Gallery Upload (Base64)" : productImage}</span>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => setProductImage("")} 
+                        className="text-xs text-rose-600 hover:text-rose-800 font-semibold p-1 cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

@@ -16,14 +16,19 @@ async function startServer() {
     try {
       const { orderId, amount, customerName, customerEmail, customerPhone } = req.body;
       
-      const rawAppId = process.env.CASHFREE_APP_ID || "12821375de78fc2e2c8d6fefc657312821";
-      const rawSecretKey = process.env.CASHFREE_SECRET_KEY || "cfsk_ma_prod_b796c278fa2180b98a4bad64d416d12b_223824f9";
+      const appId = (process.env.CASHFREE_APP_ID || "").trim();
+      const secretKey = (process.env.CASHFREE_SECRET_KEY || "").trim();
       
-      const appId = rawAppId.trim();
-      const secretKey = rawSecretKey.trim();
+      if (!appId || !secretKey) {
+        return res.status(200).json({
+          success: false,
+          error: "Cashfree API keys (CASHFREE_APP_ID & CASHFREE_SECRET_KEY) are not configured in the environment variables. Please add them in the env settings."
+        });
+      }
       
+      // Determine if keys are sandbox or production based on secret key prefix
       const isProduction = secretKey.startsWith("cfsk_ma_prod_");
-      let url = isProduction 
+      const url = isProduction 
         ? "https://api.cashfree.com/pg/orders" 
         : "https://sandbox.cashfree.com/pg/orders";
 
@@ -40,12 +45,11 @@ async function startServer() {
           customer_phone: customerPhone || "9999999999",
         },
         order_meta: {
-          // Target is secure page payment confirmation
           return_url: `${req.headers.origin || "https://ais-dev-ru3wgxzh5uxdw7biorvslv-334152686838.asia-southeast1.run.app"}/?order_id={order_id}&payment_status=success`
         }
       };
 
-      let response = await fetch(url, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,50 +60,14 @@ async function startServer() {
         body: JSON.stringify(requestBody),
       });
 
-      let data = await response.json();
-      
-      // Retry with Sandbox fallback if Production failed on authentication check
-      if (!response.ok && isProduction && data.type === "authentication_error") {
-        console.warn(`Production Auth failed (code: ${data.code}). Slicing back to try Sandbox/Test...`);
-        url = "https://sandbox.cashfree.com/pg/orders";
-        
-        try {
-          const sandboxResponse = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-version": "2023-08-01",
-              "x-client-id": appId,
-              "x-client-secret": secretKey,
-            },
-            body: JSON.stringify(requestBody),
-          });
-
-          if (sandboxResponse.ok) {
-            response = sandboxResponse;
-            data = await sandboxResponse.json();
-            console.log("Successfully authorized and initiated Sandbox Order via fallback route.");
-          } else {
-            const sandboxData = await sandboxResponse.json();
-            console.error("Sandbox fallback failed too:", sandboxData);
-          }
-        } catch (sandboxErr) {
-          console.error("Exception during sandbox fallback attempt:", sandboxErr);
-        }
-      }
+      const data = await response.json();
       
       if (!response.ok) {
         console.error("Cashfree API Order Creation Failed completely:", data);
         return res.status(200).json({
           success: false,
           error: data.message || "Failed to initiate Cashfree gateway session",
-          details: data,
-          fallbackOrder: {
-            order_id: orderId,
-            payment_session_id: `mock_session_${Date.now()}`,
-            cf_order_id: `cf_${Date.now()}`,
-            order_status: "ACTIVE"
-          }
+          details: data
         });
       }
 
@@ -108,17 +76,11 @@ async function startServer() {
         ...data
       });
     } catch (err: any) {
-      console.error("Exceeded time limit or connection error in Cashfree endpoint:", err);
+      console.error("Connection error in Cashfree endpoint:", err);
       res.status(200).json({ 
         success: false,
-        error: "Server timeout or endpoint unreachable. Engaging premium sandbox processor.", 
-        message: err.message,
-        fallbackOrder: {
-          order_id: `DAZ-${Math.floor(100000 + Math.random() * 900000)}`,
-          payment_session_id: `mock_session_${Date.now()}`,
-          cf_order_id: `cf_${Date.now()}`,
-          order_status: "ACTIVE"
-        }
+        error: "Server timeout or endpoint unreachable. Please verify network configuration.", 
+        message: err.message
       });
     }
   });
