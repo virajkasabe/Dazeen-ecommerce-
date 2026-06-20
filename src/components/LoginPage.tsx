@@ -944,37 +944,7 @@ export default function LoginPage({
               </div>
             )}
 
-            {/* Divider */}
-            <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-stone-850"></div>
-              <span className="flex-shrink mx-4 text-stone-400 text-[10px] font-mono tracking-widest uppercase">OR CONTINUE WITH</span>
-              <div className="flex-grow border-t border-stone-850"></div>
-            </div>
 
-            {/* Google Authentication Button */}
-            <button
-              type="button"
-              onClick={() => {
-                // Instantly login as Shree Deshmukh
-                const googlePayload = {
-                  uid: "google-shree-admin",
-                  email: "shreedeshmukh166@gmail.com",
-                  displayName: "Shree Deshmukh",
-                  photoURL: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150",
-                  phoneNumber: "9876543210"
-                };
-                localStorage.setItem("dazeen_current_user", JSON.stringify(googlePayload));
-                localStorage.setItem("dazeen_user_is_admin", JSON.stringify(true));
-                onLoginSuccess(googlePayload, true);
-                notificationService.send("Secure Google login successful! ☕", "Welcome back, Shree Deshmukh!");
-              }}
-              className="w-full flex items-center justify-center py-3 px-4 bg-white hover:bg-white/95 rounded-xl text-stone-950 font-bold font-mono tracking-wide text-xs transition-all duration-300 cursor-pointer shadow-lg active:scale-98"
-            >
-              <svg className="w-4 h-4 mr-2.5" viewBox="0 0 48 48">
-                <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039L38.802 8.841C34.553 4.806 29.613 2.5 24 2.5C11.983 2.5 2.5 11.983 2.5 24s9.483 21.5 21.5 21.5S45.5 36.017 45.5 24c0-1.538-.135-3.022-.389-4.417z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12.5 24 12.5c3.059 0 5.842 1.154 7.961 3.039l5.839-5.841C34.553 4.806 29.613 2.5 24 2.5C16.318 2.5 9.642 6.723 6.306 14.691z"></path><path fill="#4CAF50" d="M24 45.5c5.613 0 10.553-2.306 14.802-6.341l-5.839-5.841C30.842 35.846 27.059 38 24 38c-5.039 0-9.345-2.608-11.124-6.481l-6.571 4.819C9.642 41.277 16.318 45.5 24 45.5z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l5.839 5.841C44.196 35.123 45.5 29.837 45.5 24c0-1.538-.135-3.022-.389-4.417z"></path>
-              </svg>
-              Sign In with Google
-            </button>
 
             <div className="pt-2 text-center">
               <button
