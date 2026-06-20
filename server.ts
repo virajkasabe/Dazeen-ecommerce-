@@ -15,61 +15,45 @@ async function startServer() {
   // API Route for Fast2SMS OTP Senders
   app.post("/api/sms/send-otp", async (req, res) => {
     const { phone, otp, otpValue } = req.body;
-    const resolvedOtpValue = otpValue || (otp ? `${otp}|` : "");
-
-    if (!phone || !resolvedOtpValue) {
-      return res.status(400).json({ success: false, error: "Missing phone or OTP" });
+    let rawOtp = otpValue || otp || "";
+    
+    // Ensure the OTP value is formatted with '|' at the end for the DLT variable template
+    let formattedOtpValue = rawOtp;
+    if (formattedOtpValue && !formattedOtpValue.endsWith("|")) {
+      formattedOtpValue = `${formattedOtpValue}|`;
     }
 
-    const url = "https://www.fast2sms.com/dev/bulkV2";
-    const fallbackAuth = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
-    const authKey = process.env.AUTHORIZATION || fallbackAuth;
+    if (!phone || !formattedOtpValue) {
+      return res.status(400).json({ success: false, error: "Missing phone or OTP value" });
+    }
 
-    console.log("DEBUG_URL:", `${url}?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodeURIComponent(resolvedOtpValue)}&numbers=${phone}`);
+    // Hardcoded check (temporary real key)
+    const authKey = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
+    const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodeURIComponent(formattedOtpValue)}&numbers=${phone}`;
+
+    console.log("DEBUG_URL:", url); // Check server logs for this!
 
     try {
-      const response = await axios.get(url, {
-        params: {
-          authorization: authKey,
-          route: "dlt",
-          sender_id: "DAZEEN",
-          message: "214505",
-          variables_values: resolvedOtpValue,
-          numbers: phone
-        }
-      });
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      console.log("Fast2SMS API Response data:", data);
 
-      // Check if Fast2SMS returned an explicit error block from the gateway inside 200 OK
-      if (response.data && response.data.return === false) {
+      if (!response.ok || (data && data.return === false)) {
         return res.status(200).json({
           success: false,
-          error: response.data.message || "Failed to deliver SMS. Check if Fast2SMS balance is active or credentials are valid.",
-          details: response.data
+          error: data.message || "Failed to deliver SMS. Check if Fast2SMS balance is active or the credentials are valid.",
+          details: data
         });
       }
 
-      return res.status(200).json({
+      res.status(200).json({
         success: true,
-        ...response.data
+        ...data
       });
     } catch (error: any) {
-      if (error.response) {
-        // Server se kya error aaya (Status 404, 403, etc.)
-        console.error("Fast2SMS API Error Response:", error.response.data);
-        return res.status(500).json({
-          success: false,
-          error: `API Error (Status ${error.response.status})`,
-          data: error.response.data,
-          status: error.response.status
-        });
-      } else {
-        console.error("Fast2SMS Connection/Network Error:", error.message);
-        return res.status(500).json({
-          success: false,
-          error: "Network Error",
-          message: error.message
-        });
-      }
+      console.error("Fast2SMS Fetch API connection failed:", error);
+      res.status(500).json({ success: false, error: "API Failed", message: error.message });
     }
   });
 
