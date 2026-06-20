@@ -104,11 +104,11 @@ async function startServer() {
     const { phone, otpValue } = req.query;
     const authKey = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
 
-    // 1. Template Variables ko encode karo
-    const encodedVars = encodeURIComponent((otpValue as string || "") + "|");
+    // 1. Template Variables ko encode karo (bina pipe ke)
+    const encodedVars = encodeURIComponent(otpValue as string || "");
     
-    // 2. URL construct karo (No spaces, no special chars)
-    const baseUrl = "https://www.fast2sms.com/dev/bulkV2";
+    // 2. URL construct karo (bulkV3 endpoint)
+    const baseUrl = "https://www.fast2sms.com/dev/bulkV3";
     const query = `authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodedVars}&numbers=${phone}`;
     
     const finalUrl = `${baseUrl}?${query}`;
