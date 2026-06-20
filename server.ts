@@ -105,26 +105,23 @@ async function startServer() {
     const { phone, otpValue } = req.query;
     const authKey = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
 
-    const pathUrl = `/dev/bulkV2?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${otpValue}&numbers=${phone}`;
+    // Sabse pehle check karo ki key kya hai
+    console.log("SERVER_LOG: AuthKey length is", authKey ? authKey.length : "NULL");
 
-    const options = {
-        hostname: 'www.fast2sms.com',
-        port: 443,
-        path: pathUrl,
-        method: 'GET',
-        headers: {
-            'User-Agent': 'Mozilla/5.0' // Minimum possible headers
-        }
-    };
+    if (!authKey || authKey === "undefined") {
+        return res.status(500).send("Critical Error: API Key not loaded on Vercel");
+    }
 
-    const request = https.request(options, (response) => {
-        let data = '';
-        response.on('data', (chunk) => { data += chunk; });
-        response.on('end', () => { res.send(data); });
-    });
-
-    request.on('error', (e) => { res.status(500).send(e.message); });
-    request.end();
+    const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${otpValue}|&numbers=${phone}`;
+    
+    try {
+        const response = await fetch(url);
+        const data = await response.text();
+        console.log("SERVER_LOG: Final Response from Fast2SMS:", data);
+        res.status(200).send(data);
+    } catch (error: any) {
+        res.status(500).send(error.message || "Error");
+    }
   });
 
   // API Route for Cashfree order creation
