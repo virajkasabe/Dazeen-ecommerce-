@@ -103,18 +103,22 @@ async function startServer() {
   app.get("/api/send-otp", async (req, res) => {
     const { phone, otpValue } = req.query;
     const authKey = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
+
+    // 1. Template Variables ko encode karo
+    const encodedVars = encodeURIComponent((otpValue as string || "") + "|");
     
-    // Fast2SMS API URL
-    const url = `https://www.fast2sms.com/dev/bulkV2`;
+    // 2. URL construct karo (No spaces, no special chars)
+    const baseUrl = "https://www.fast2sms.com/dev/bulkV2";
+    const query = `authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodedVars}&numbers=${phone}`;
+    
+    const finalUrl = `${baseUrl}?${query}`;
     
     try {
-        const response = await fetch(`${url}?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${otpValue}|&numbers=${phone}`);
-        
-        // Fast2SMS se jo bhi response aaye, usse direct user ko bhej do
+        const response = await fetch(finalUrl);
         const data = await response.text();
         res.status(200).send(data);
-    } catch (error) {
-        res.status(500).send("Error");
+    } catch (error: any) {
+        res.status(500).send(error.message || "Error");
     }
   });
 
