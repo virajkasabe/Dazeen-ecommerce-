@@ -278,3 +278,143 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Gooey Search Bar Styling */
+.wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-content-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-btn {
+  background-color: #1c1917; /* Slate dark stone color */
+  color: white;
+  height: 40px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.search-btn:hover {
+  background-color: #292524;
+}
+
+.search-text {
+  padding: 0 20px;
+  white-space: nowrap;
+}
+
+.search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  padding: 0 16px;
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.search-results {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  z-index: 5;
+}
+
+.search-result {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #fafaf9; /* Warm off-white */
+  color: #1c1917;
+  border-radius: 9999px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  border: 1px solid #e7e5e4;
+  z-index: 5;
+}
+
+.search-result-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.separate-element {
+  position: absolute;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  pointer-events: none;
+}
+
+.info-icon {
+  width: 15px;
+  height: 15px;
+  color: #78716c;
+}
+
+.loading-icon {
+  width: 15px;
+  height: 15px;
+  animation: spi 1.2s linear infinite;
+  stroke: currentColor;
+}
+
+@keyframes spi {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Gooey connection */
+.wrapper:not(.no-goo) .button-content-inner {
+  filter: url('#goo-effect');
+}
+

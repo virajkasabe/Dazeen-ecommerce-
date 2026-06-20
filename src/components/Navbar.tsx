@@ -6,6 +6,7 @@ import { CartItem } from "../types";
 import { LiquidButton } from "./ui/liquid-glass-button";
 import { BottomNavBar } from "./ui/bottom-nav-bar";
 import { MenuToggleIcon } from "./ui/menu-toggle-icon";
+import { GooeySearchBar } from "./ui/animated-search-bar";
 
 interface NavbarProps {
   cart: CartItem[];
@@ -90,8 +91,8 @@ export default function Navbar({
                 onNavigate("hero");
               }}
             >
-              <div className="w-8 h-8 rounded-full border-2 border-stone-800/30 flex items-center justify-center shadow-lg shadow-stone-800/5 bg-white/40">
-                <div className="w-2.5 h-2.5 rounded-full bg-stone-800 animate-pulse" />
+              <div onClick={(e) => e.stopPropagation()} className="mr-1">
+                <GooeySearchBar />
               </div>
               <span className="ml-2.5 font-serif font-black text-stone-700 text-sm tracking-wide hidden sm:inline-block">Dazeen Coffee</span>
             </div>
