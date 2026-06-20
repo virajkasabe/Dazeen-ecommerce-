@@ -14,51 +14,61 @@ async function startServer() {
   // API Route for Fast2SMS OTP Senders
   app.post("/api/sms/send-otp", async (req, res) => {
     try {
-      const { phone, otp } = req.body;
-      const fallbackAuth = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
-      const variables_values = `${otp}|`; // Formats variables_values as OTP code followed by a pipe character
-      const numbers = phone;
-      
-      console.log(`Sending Fast2SMS DLT OTP (${otp}) to phone: ${phone} using DLT route...`);
+      const { phone, otp, otpValue } = req.body;
+      const resolvedOtpValue = otpValue || (otp ? `${otp}|` : "");
 
-      // Add this in backend handler
-      const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.AUTHORIZATION || fallbackAuth}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodeURIComponent(variables_values)}&numbers=${numbers}`;
-
-      console.log("DEBUG_URL:", url); // Check your Vercel Logs for this!
-
-      const response = await fetch(url);
-
-      const responseText = await response.text();
-      let data: any;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        console.error("Fast2SMS gateway returned non-JSON response:", responseText);
-        return res.status(200).json({
-          success: false,
-          error: "Fast2SMS gateway returned an HTML/error page instead of JSON. This typically happens when credentials expire, when limits are exhausted, or when the IP is blocked.",
-          details: responseText.slice(0, 150)
-        });
+      if (!phone || !resolvedOtpValue) {
+        return res.status(400).json({ success: false, error: "Missing phone or OTP" });
       }
+
+      const baseUrl = "https://www.fast2sms.com/dev/bulkV2";
+      const fallbackAuth = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
+      const params = new URLSearchParams({
+        authorization: process.env.AUTHORIZATION || fallbackAuth,
+        route: "dlt",
+        sender_id: "DAZEEN",
+        message: "214505",
+        variables_values: resolvedOtpValue,
+        numbers: phone
+      });
+
+      const finalUrl = `${baseUrl}?${params.toString()}`;
+      
+      console.log("DEBUG_URL:", finalUrl); // Check your Vercel Logs for this!
+
+      const response = await fetch(finalUrl);
+      
+      // Check if the response is actually JSON before parsing
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          console.error("Non-JSON response received:", text);
+          return res.status(500).json({ 
+            success: false, 
+            error: `API returned non-JSON response. Raw Response: ${text.slice(0, 150)}...` 
+          });
+      }
+
+      const data = await response.json();
 
       if (!response.ok || !data.return) {
         console.error("Fast2SMS gateway returned error / rejection:", data);
         return res.status(200).json({
           success: false,
-          error: data.message || "Failed to deliver SMS. Check if Fast2SMS balance is active or the credentials are valid.",
+          error: data.message || "Failed to deliver SMS. Check if Fast2SMS balance is active or credentials are valid.",
           details: data
         });
       }
 
-      res.json({
+      res.status(200).json({
         success: true,
-        data
+        ...data
       });
     } catch (err: any) {
       console.error("Connection error in /api/sms/send-otp endpoint:", err);
-      res.status(200).json({
+      res.status(500).json({
         success: false,
-        error: "Fast2SMS Connection failed. Check server logs.",
+        error: "Fetch failed",
         message: err.message
       });
     }
