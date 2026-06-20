@@ -7,6 +7,7 @@ import {
 import { CartItem } from "../types";
 import { notificationService } from "../utils/notifications";
 import CheckoutForm from "./ui/checkout-form";
+import Checkout from "./ui/checkout-block";
 import { RadioGroup3D } from "./ui/3d-radio-group";
 
 declare global {
@@ -1135,23 +1136,7 @@ export default function CartPage({
             ========================================== */}
         {checkoutStep === "payment" && (
           <div className="col-span-12">
-            <CheckoutForm 
-              currentUser={currentUser}
-              cartItems={cart}
-              onOrderPlaced={(order) => {
-                setTimeout(() => {
-                  onClearCart();
-                  onSetView("tracking");
-                }, 4000);
-              }}
-              initialFullName={fullName}
-              initialPhoneNumber={phoneNumber}
-              initialPincode={pincode}
-              initialAddressLine1={addressLine1}
-              initialAddressLine2={addressLine2}
-              initialCity={city}
-              initialState={state}
-            />
+            <Checkout />
           </div>
         )}
 
