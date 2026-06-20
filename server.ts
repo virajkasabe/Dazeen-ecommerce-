@@ -101,23 +101,22 @@ async function startServer() {
   });
 
   app.get("/api/send-otp", async (req, res) => {
-    const phone = req.query.phone as string;
-    const otpValue = req.query.otpValue as string;
-    
+    const { phone, otpValue } = req.query;
     const authKey = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
-    
-    // DEBUGGING: Ye line aapke Vercel Logs mein dikhegi
     const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${otpValue}|&numbers=${phone}`;
-    console.log("DEBUG_URL_BEING_SENT:", url.replace(authKey, "HIDDEN_KEY"));
-
+    
     try {
         const response = await fetch(url);
-        const text = await response.text(); // JSON ke bajaye text lo
-        console.log("RAW_RESPONSE_FROM_SERVER:", text); // Ye log check karo
         
-        res.send(text);
-    } catch (e: any) {
-        res.status(500).send("Error: " + e.message);
+        // JSON parse karne ki galti mat karo
+        const rawText = await response.text(); 
+        
+        console.log("Fast2SMS Response:", rawText); // Console mein dekho kya aa raha hai
+        
+        // Sidha text bhej do frontend ko, parse mat karo
+        res.status(200).send(rawText); 
+    } catch (e) {
+        res.status(500).send("Error");
     }
   });
 
