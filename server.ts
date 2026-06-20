@@ -124,33 +124,45 @@ async function startServer() {
 
   // API Route for Cashfree webhook
   app.all("/api/cashfree/webhook", async (req, res) => {
-    if (req.method === "POST") {
-      const paymentData = req.body;
-      
-      // Log karo taaki pata chale data aaya ya nahi
-      console.log("Webhook Received from Cashfree (/api/cashfree/webhook):", paymentData);
-
-      // SABSE ZARURI: Cashfree ko 200 OK bhejo
-      return res.status(200).json({ message: "Webhook received successfully" });
+    // 1. Sirf POST request handle karo
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
     }
 
-    // Agar koi aur method hai toh error
-    res.status(405).send("Method Not Allowed");
+    // 2. CASHFREE ko turant OK bhejo (Handshake complete)
+    // Iske bina "Endpoint did not respond" error aayega
+    res.status(200).json({ status: "OK" });
+
+    // 3. Ab background mein apna kaam karo (Database update, Email, etc.)
+    try {
+      const paymentData = req.body;
+      console.log("CASHFREE_DATA (/api/cashfree/webhook):", JSON.stringify(paymentData, null, 2));
+      
+      // Yahan apna logic likho (jaise Order status update karna)
+    } catch (error) {
+      console.error("Webhook processing error:", error);
+    }
   });
 
   app.all("/api/webhook", async (req, res) => {
-    if (req.method === "POST") {
-      const paymentData = req.body;
-      
-      // Log karo taaki pata chale data aaya ya nahi
-      console.log("Webhook Received from Cashfree (/api/webhook):", paymentData);
-
-      // SABSE ZARURI: Cashfree ko 200 OK bhejo
-      return res.status(200).json({ message: "Webhook received successfully" });
+    // 1. Sirf POST request handle karo
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
     }
 
-    // Agar koi aur method hai toh error
-    res.status(405).send("Method Not Allowed");
+    // 2. CASHFREE ko turant OK bhejo (Handshake complete)
+    // Iske bina "Endpoint did not respond" error aayega
+    res.status(200).json({ status: "OK" });
+
+    // 3. Ab background mein apna kaam karo (Database update, Email, etc.)
+    try {
+      const paymentData = req.body;
+      console.log("CASHFREE_DATA (/api/webhook):", JSON.stringify(paymentData, null, 2));
+      
+      // Yahan apna logic likho (jaise Order status update karna)
+    } catch (error) {
+      console.error("Webhook processing error:", error);
+    }
   });
 
   // API Route for Cashfree order creation
