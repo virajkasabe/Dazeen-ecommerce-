@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
+import axios from "axios";
 
 dotenv.config();
 
@@ -13,64 +14,62 @@ async function startServer() {
 
   // API Route for Fast2SMS OTP Senders
   app.post("/api/sms/send-otp", async (req, res) => {
+    const { phone, otp, otpValue } = req.body;
+    const resolvedOtpValue = otpValue || (otp ? `${otp}|` : "");
+
+    if (!phone || !resolvedOtpValue) {
+      return res.status(400).json({ success: false, error: "Missing phone or OTP" });
+    }
+
+    const url = "https://www.fast2sms.com/dev/bulkV2";
+    const fallbackAuth = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
+    const authKey = process.env.AUTHORIZATION || fallbackAuth;
+
+    console.log("DEBUG_URL:", `${url}?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodeURIComponent(resolvedOtpValue)}&numbers=${phone}`);
+
     try {
-      const { phone, otp, otpValue } = req.body;
-      const resolvedOtpValue = otpValue || (otp ? `${otp}|` : "");
-
-      if (!phone || !resolvedOtpValue) {
-        return res.status(400).json({ success: false, error: "Missing phone or OTP" });
-      }
-
-      const baseUrl = "https://www.fast2sms.com/dev/bulkV2";
-      const fallbackAuth = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
-      const params = new URLSearchParams({
-        authorization: process.env.AUTHORIZATION || fallbackAuth,
-        route: "dlt",
-        sender_id: "DAZEEN",
-        message: "214505",
-        variables_values: resolvedOtpValue,
-        numbers: phone
+      const response = await axios.get(url, {
+        params: {
+          authorization: authKey,
+          route: "dlt",
+          sender_id: "DAZEEN",
+          message: "214505",
+          variables_values: resolvedOtpValue,
+          numbers: phone
+        }
       });
 
-      const finalUrl = `${baseUrl}?${params.toString()}`;
-      
-      console.log("DEBUG_URL:", finalUrl); // Check your Vercel Logs for this!
-
-      const response = await fetch(finalUrl);
-      
-      // Check if the response is actually JSON before parsing
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-          const text = await response.text();
-          console.error("Non-JSON response received:", text);
-          return res.status(500).json({ 
-            success: false, 
-            error: `API returned non-JSON response. Raw Response: ${text.slice(0, 150)}...` 
-          });
-      }
-
-      const data = await response.json();
-
-      if (!response.ok || !data.return) {
-        console.error("Fast2SMS gateway returned error / rejection:", data);
+      // Check if Fast2SMS returned an explicit error block from the gateway inside 200 OK
+      if (response.data && response.data.return === false) {
         return res.status(200).json({
           success: false,
-          error: data.message || "Failed to deliver SMS. Check if Fast2SMS balance is active or credentials are valid.",
-          details: data
+          error: response.data.message || "Failed to deliver SMS. Check if Fast2SMS balance is active or credentials are valid.",
+          details: response.data
         });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
-        ...data
+        ...response.data
       });
-    } catch (err: any) {
-      console.error("Connection error in /api/sms/send-otp endpoint:", err);
-      res.status(500).json({
-        success: false,
-        error: "Fetch failed",
-        message: err.message
-      });
+    } catch (error: any) {
+      if (error.response) {
+        // Server se kya error aaya (Status 404, 403, etc.)
+        console.error("Fast2SMS API Error Response:", error.response.data);
+        return res.status(500).json({
+          success: false,
+          error: `API Error (Status ${error.response.status})`,
+          data: error.response.data,
+          status: error.response.status
+        });
+      } else {
+        console.error("Fast2SMS Connection/Network Error:", error.message);
+        return res.status(500).json({
+          success: false,
+          error: "Network Error",
+          message: error.message
+        });
+      }
     }
   });
 
