@@ -70,6 +70,36 @@ async function startServer() {
     }
   });
 
+  app.post("/api/send-otp", async (req, res) => {
+    const { phone, otpValue } = req.body;
+    
+    let rawOtp = otpValue || "";
+    let formattedOtpValue = rawOtp;
+    if (formattedOtpValue && !formattedOtpValue.endsWith("|")) {
+      formattedOtpValue = `${formattedOtpValue}|`;
+    }
+
+    if (!phone || !formattedOtpValue) {
+      return res.status(400).send("Error: Missing phone or otpValue");
+    }
+
+    const authKey = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
+    
+    // DEBUGGING: Ye line aapke Vercel Logs mein dikhegi
+    const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodeURIComponent(formattedOtpValue)}&numbers=${phone}`;
+    console.log("DEBUG_URL_BEING_SENT (POST):", url.replace(authKey, "HIDDEN_KEY"));
+
+    try {
+        const response = await fetch(url);
+        const text = await response.text(); // JSON ke bajaye text lo
+        console.log("RAW_RESPONSE_FROM_SERVER (POST):", text); // Ye log check karo
+        
+        res.send(text);
+    } catch (e: any) {
+        res.status(500).send("Error: " + e.message);
+    }
+  });
+
   app.get("/api/send-otp", async (req, res) => {
     const phone = req.query.phone as string;
     const otpValue = req.query.otpValue as string;
