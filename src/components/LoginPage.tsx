@@ -356,39 +356,21 @@ export default function LoginPage({
         serverResult = JSON.parse(responseText);
       } catch (jsonErr) {
         console.warn("Server returned a non-JSON/HTML page during OTP dispatch:", responseText);
-        // Fallback to development/testing bypass mode
-        serverResult = {
-          success: true,
-          simulated: true,
-          error: "Local backend returned an HTML or proxy status page. Sandboxing OTP transmission."
-        };
+        setError(`SMS Network Error: Unexpected token '${responseText.trim().charAt(0) || "T"}' in JSON at position 0. Response is not valid JSON: ${responseText.slice(0, 120)}...`);
+        return;
       }
 
       if (serverResult.success === true) {
         setGeneratedOtp(code);
         setOtpSent(true);
         setOtp("");
-        if (serverResult.simulated) {
-          setSuccessMsg(`Simulated OTP for login: ${code} (Shown since SMS API is offline or returning HTML/restarting)`);
-        } else {
-          setSuccessMsg("OTP sent successfully");
-        }
+        setSuccessMsg("OTP sent successfully");
       } else {
-        // Since actual Fast2SMS accounts sometimes run out of balance or DLT templates fail, we show the error but allow dynamic sandboxed bypass
-        setGeneratedOtp(code);
-        setOtpSent(true);
-        setOtp("");
         setError(`Fast2SMS Gateway Error: ${serverResult.error || "Failed to transmit OTP."}`);
-        setSuccessMsg(`Bypassed using simulated test OTP: ${code} (Use this code to proceed with testing)`);
       }
     } catch (err: any) {
       console.warn("Connection issue during OTP dispatch:", err);
-      // Fallback on network disconnection
-      setGeneratedOtp(code);
-      setOtpSent(true);
-      setOtp("");
       setError(`SMS Network Error: ${err?.message || "Failed to establish standard connection."}`);
-      setSuccessMsg(`Bypassed using simulated test OTP: ${code} (Use this code to proceed with testing)`);
     } finally {
       setLoading(false);
     }
