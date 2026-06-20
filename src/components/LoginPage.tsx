@@ -342,25 +342,18 @@ export default function LoginPage({
     setLoading(true);
     const code = Math.floor(1000 + Math.random() * 9000).toString(); // Secure 4-digit code
 
-    const apiKey = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
-    const proxyUrl = "https://cors-anywhere.herokuapp.com/"; 
-    const targetUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${apiKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${code}|&numbers=${phone}`;
-
-    console.log("Initiating direct OTP send via proxy...");
-    console.log("TARGET_URL_BEING_SENT:", targetUrl.replace(apiKey, "HIDDEN_KEY"));
-
     try {
-      const response = await fetch(proxyUrl + targetUrl);
+      const response = await fetch(`/api/send-otp?phone=${phone}&otpValue=${code}`);
       const dataText = await response.text();
       
-      console.log("RAW_CORS_PROXY_RESPONSE:", dataText);
+      console.log("SERVER_RESPONSE:", dataText);
 
       // Try parsing response as JSON to see if it succeeded
       let parsedData: any = {};
       try {
         parsedData = JSON.parse(dataText);
       } catch (jsonErr) {
-        console.warn("Direct proxy response was not valid JSON, but logged raw text above:", dataText);
+        console.warn("Direct response was not valid JSON, but logged raw text above:", dataText);
       }
 
       // Fast2SMS return true if successfully accepted/queued
@@ -368,18 +361,13 @@ export default function LoginPage({
         setGeneratedOtp(code);
         setOtpSent(true);
         setOtp("");
-        setSuccessMsg(`OTP sent successfully! Custom Code is ${code}`);
+        setSuccessMsg(`OTP sent successfully!`);
       } else {
-        // If cors-anywhere demands a demo activation session
-        if (dataText.includes("See: https://cors-anywhere.herokuapp.com/corsdemo")) {
-          setError("CORS-Anywhere Needs Unlock: Please visit https://cors-anywhere.herokuapp.com/corsdemo in your browser and click 'Request temporary access', then try requesting OTP again.");
-        } else {
-          setError(`Fast2SMS Response: ${dataText || "Unknown proxy transmission error."}`);
-        }
+        setError(`Fast2SMS Response: ${dataText || "Unknown server transmission error."}`);
       }
     } catch (err: any) {
-      console.error("Direct Proxy/CORS Transmission Failed:", err);
-      setError(`Transmission Error: ${err?.message || "Failed to reach CORS-anywhere proxy."}`);
+      console.error("Transmission Failed:", err);
+      setError(`Transmission Error: ${err?.message || "Failed to reach backend OTP api."}`);
     } finally {
       setLoading(false);
     }

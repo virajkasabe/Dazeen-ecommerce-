@@ -102,33 +102,19 @@ async function startServer() {
 
   app.get("/api/send-otp", async (req, res) => {
     const { phone, otpValue } = req.query;
-
-    if (!phone || !otpValue) {
-        return res.status(400).send("Phone or OTP missing");
-    }
-
     const authKey = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
-
-    // Parameters ko separate object mein rakho taaki URL automatic encode ho
-    const params = new URLSearchParams({
-        authorization: authKey,
-        route: "dlt",
-        sender_id: "DAZEEN",
-        message: "214505",
-        variables_values: (otpValue as string) + "|",
-        numbers: phone as string
-    });
-
-    const url = `https://www.fast2sms.com/dev/bulkV2?${params.toString()}`;
+    
+    // Fast2SMS API URL
+    const url = `https://www.fast2sms.com/dev/bulkV2`;
     
     try {
-        const response = await fetch(url);
-        const text = await response.text();
-        console.log("FINAL_URL_SENT:", url);
-        console.log("SERVER_RESPONSE:", text);
-        res.status(200).send(text);
-    } catch (e: any) {
-        res.status(500).send("Error: " + e.message);
+        const response = await fetch(`${url}?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${otpValue}|&numbers=${phone}`);
+        
+        // Fast2SMS se jo bhi response aaye, usse direct user ko bhej do
+        const data = await response.text();
+        res.status(200).send(data);
+    } catch (error) {
+        res.status(500).send("Error");
     }
   });
 
