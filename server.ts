@@ -30,7 +30,18 @@ async function startServer() {
         }
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Fast2SMS gateway returned non-JSON response:", responseText);
+        return res.status(200).json({
+          success: false,
+          error: "Fast2SMS gateway returned an HTML/error page instead of JSON. This typically happens when credentials expire, when limits are exhausted, or when the IP is blocked.",
+          details: responseText.slice(0, 150)
+        });
+      }
 
       if (!response.ok || !data.return) {
         console.error("Fast2SMS gateway returned error / rejection:", data);

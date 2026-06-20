@@ -115,9 +115,9 @@ export function BottomNavBar({
                   className="absolute inset-0 rounded-full z-0 pointer-events-none"
                   transition={{ type: "spring", stiffness: 380, damping: 26 }}
                   style={{
-                    background: "linear-gradient(135deg, rgba(180, 148, 43, 0.4) 0%, rgba(234, 179, 8, 0.6) 100%)",
-                    boxShadow: "0 0 16px rgba(234, 179, 8, 0.35), inset 0 0 8px rgba(255, 255, 255, 0.3)",
-                    border: "1px solid rgba(255, 255, 255, 0.25)",
+                    background: "linear-gradient(135deg, rgba(180, 148, 43, 0.2) 0%, rgba(234, 179, 8, 0.35) 100%)",
+                    boxShadow: "0 0 12px rgba(234, 179, 8, 0.15), inset 0 0 8px rgba(255, 255, 255, 0.15)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
                   }}
                 />
               )}
