@@ -388,6 +388,14 @@ export default function App() {
             }}
             currentUser={currentUser}
             isAdmin={isAdmin}
+            onAddToCart={(product) => {
+              handleAddToCart(product);
+              setCurrentView("cart");
+            }}
+            onReorder={(items) => {
+              setCart(items);
+              setCurrentView("cart");
+            }}
           />
         )}
 

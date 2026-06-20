@@ -1144,6 +1144,13 @@ export default function CartPage({
                   onSetView("tracking");
                 }, 4000);
               }}
+              initialFullName={fullName}
+              initialPhoneNumber={phoneNumber}
+              initialPincode={pincode}
+              initialAddressLine1={addressLine1}
+              initialAddressLine2={addressLine2}
+              initialCity={city}
+              initialState={state}
             />
           </div>
         )}

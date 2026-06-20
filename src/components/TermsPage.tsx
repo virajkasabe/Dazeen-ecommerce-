@@ -43,6 +43,8 @@ export default function TermsPage({ onBackToHome }: TermsPageProps) {
     onBackToHome();
   };
 
+  const [activeTab, setActiveTab] = useState<'terms' | 'privacy' | 'refund'>('terms');
+
   return (
     <div className="min-h-screen bg-[#FAF6F0] selection:bg-[#C5A880]/30 text-stone-900 pb-24 md:pb-32 pt-28">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -58,14 +60,14 @@ export default function TermsPage({ onBackToHome }: TermsPageProps) {
           </button>
           
           <div className="flex items-center gap-4 bg-white/60 border border-coffee-200/50 rounded-2xl px-4 py-2 text-xs font-mono font-medium text-coffee-700">
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 flex-wrap">
               <Clock className="w-3.5 h-3.5 text-[#5E0ED7]" />
               <span>Effective Date: June 2026</span>
             </span>
             <span className="text-coffee-300">|</span>
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 flex-wrap">
               <Shield className="w-3.5 h-3.5 text-emerald-600" />
-              <span>100% Verified Pure</span>
+              <span>100% Refund Safeguard</span>
             </span>
           </div>
         </div>
@@ -74,13 +76,13 @@ export default function TermsPage({ onBackToHome }: TermsPageProps) {
         <div className="text-left mb-12 space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#5E0ED7]/5 border border-[#5E0ED7]/15 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider text-[#5E0ED7]">
             <BookOpen className="w-3.5 h-3.5" />
-            <span>DAZEEN LEGAL CENTER</span>
+            <span>DAZEEN SERVICE GUIDELINES & POLICIES</span>
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-black text-coffee-950 tracking-tight leading-[1.08]">
-            Terms of Service & Boutiques Sourcing
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-black text-coffee-950 tracking-tight leading-[1.08] select-none">
+            Trust & Sourcing Agreements
           </h1>
           <p className="text-base text-coffee-700/90 max-w-2xl font-sans mt-2">
-            Please review the legal user agreement & organic purity specifications for Dazeen Specialty Filter Coffees. Scroll deep to authorize your consent.
+            Please read Dazeen's User Terms, Privacy Safeguards, and Return Policies before placing orders.
           </p>
         </div>
 
@@ -88,43 +90,90 @@ export default function TermsPage({ onBackToHome }: TermsPageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Left Column: Side Info Cards */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-3xl border border-coffee-200/60 p-6 space-y-4 shadow-sm relative overflow-hidden">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
-                <Coffee className="w-6 h-6" />
+          <div className="lg:col-span-1 space-y-4">
+            <div className="bg-white rounded-3xl border border-coffee-200/60 p-5 space-y-3.5 shadow-sm relative overflow-hidden">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
+                <Coffee className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-serif font-bold text-coffee-950">Pure Organic Guarantee</h3>
-              <p className="text-xs text-coffee-600 leading-relaxed">
-                All high-altitude estate blends are shade-grown, pesticide free, and purified using solvents-free water separation with 0% chemical residues.
+              <h3 className="text-base font-serif font-bold text-coffee-950">Pure Organic Guarantee</h3>
+              <p className="text-[11px] text-coffee-600 leading-relaxed font-sans">
+                All estate ground blends are shade-grown under natural forest canopies, chemical-free and moisture-sealed.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-stone-900 to-stone-950 rounded-3xl border border-stone-850 p-6 space-y-4 shadow-xl text-stone-100">
-              <div className="w-12 h-12 rounded-2xl bg-stone-800/80 flex items-center justify-center text-[#5E0ED7]">
-                <FileText className="w-6 h-6 animate-pulse" />
+            <div className="bg-white rounded-3xl border border-coffee-200/60 p-5 space-y-3.5 shadow-sm relative overflow-hidden">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <Shield className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-serif font-bold text-stone-50">Instant Action Required</h3>
-              <p className="text-xs text-stone-400 leading-relaxed font-sans">
-                You must scroll through the document content viewport to confirm that you have scanned our quality standards before placing an order.
+              <h3 className="text-base font-serif font-bold text-coffee-950">Refund Protection Rule</h3>
+              <p className="text-[11px] text-coffee-600 leading-relaxed font-sans">
+                Refund is only processed if your packet received is wrong or physically damaged/spoiled.
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-stone-900 to-stone-950 rounded-3xl border border-stone-850 p-5 space-y-3 shadow-xl text-stone-100">
+              <div className="w-10 h-10 rounded-2xl bg-stone-800 flex items-center justify-center text-[#5E0ED7]">
+                <FileText className="w-5 h-5 animate-pulse" />
+              </div>
+              <h3 className="text-sm font-serif font-bold text-stone-50 select-none">Action Required</h3>
+              <p className="text-[10px] text-stone-400 leading-relaxed font-sans">
+                Select policies below, review terms, and scroll down to agree for instant priority express checkout.
               </p>
             </div>
           </div>
 
           {/* Right Column: Terms Viewer Component */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-3xl border border-coffee-200/60 shadow-lg overflow-hidden flex flex-col h-[520px]">
+            
+            {/* Tabs Row */}
+            <div className="flex gap-1.5 mb-3 bg-coffee-100/50 p-1 rounded-xl">
+              <button
+                onClick={() => { setActiveTab('terms'); setHasReadToBottom(false); }}
+                className={`flex-1 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  activeTab === 'terms' 
+                    ? 'bg-white text-coffee-950 shadow-sm border border-coffee-200/40' 
+                    : 'text-coffee-600 hover:text-coffee-900'
+                }`}
+              >
+                Terms
+              </button>
+              <button
+                onClick={() => { setActiveTab('privacy'); setHasReadToBottom(false); }}
+                className={`flex-1 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  activeTab === 'privacy' 
+                    ? 'bg-white text-coffee-950 shadow-sm border border-coffee-200/40' 
+                    : 'text-coffee-600 hover:text-coffee-900'
+                }`}
+              >
+                Privacy Policy
+              </button>
+              <button
+                onClick={() => { setActiveTab('refund'); setHasReadToBottom(false); }}
+                className={`flex-1 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  activeTab === 'refund' 
+                    ? 'bg-white text-coffee-950 shadow-sm border border-coffee-200/40' 
+                    : 'text-coffee-600 hover:text-coffee-900'
+                }`}
+              >
+                Refund Rules
+              </button>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-coffee-200/60 shadow-lg overflow-hidden flex flex-col h-[480px]">
               
-              {/* Table header bar */}
-              <div className="border-b border-coffee-100 px-6 py-4 flex items-center justify-between bg-[#FCFAF7] shrink-0">
+              {/* Document header bar */}
+              <div className="border-b border-coffee-150 px-6 py-3 flex items-center justify-between bg-[#FCFAF7] shrink-0 select-none">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-xs font-mono font-bold tracking-wider text-coffee-800 uppercase">
-                    Interactive Agreement Document
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-[10px] font-mono font-bold tracking-wider text-coffee-800 uppercase">
+                    {activeTab === 'terms' && '01. USER TERMS OF SERVICE'}
+                    {activeTab === 'privacy' && '02. DATA PRIVACY COGNIZANCE'}
+                    {activeTab === 'refund' && '03. CONCIERGE RETURN & REFUND RULES'}
                   </span>
                 </div>
                 {!hasReadToBottom && (
-                  <span className="text-[10px] font-mono font-bold bg-amber-100/70 border border-amber-200 text-amber-800 px-2.5 py-0.5 rounded-full uppercase tracking-wider animate-bounce">
-                    Scroll down
+                  <span className="text-[9px] font-mono font-bold bg-amber-100 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce">
+                    Scroll deep
                   </span>
                 )}
               </div>
@@ -133,121 +182,141 @@ export default function TermsPage({ onBackToHome }: TermsPageProps) {
               <div
                 ref={contentRef}
                 onScroll={handleScroll}
-                className="overflow-y-auto flex-grow p-6 sm:p-8 space-y-6 text-sm text-coffee-700 leading-relaxed font-sans scroll-smooth"
+                className="overflow-y-auto flex-grow p-6 sm:p-7 space-y-5 text-xs sm:text-sm text-coffee-700 leading-relaxed font-sans scroll-smooth"
               >
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <h4 className="text-coffee-950 font-bold font-serif text-lg tracking-tight flex items-center gap-2">
-                      <span className="text-xs font-mono text-zinc-400">01</span>
-                      Acceptance of Terms
-                    </h4>
-                    <p className="text-zinc-600 text-xs sm:text-sm pl-6">
-                      By accessing, browsing, or buying from the website, users agreement to comply with and be bound by these Terms of Service. These apply universally to all retail clients, custom cafe grinding programs, and delivery agreements. Users who do not agree with these terms should discontinue use of the website immediately.
-                    </p>
-                  </div>
+                
+                {activeTab === 'terms' && (
+                  <div className="space-y-5">
+                    <div className="space-y-1.5">
+                      <h4 className="text-coffee-950 font-bold font-serif text-sm tracking-tight flex items-center gap-2 select-none">
+                        <span className="text-[10px] font-mono text-[#5E0ED7]">01</span>
+                        Acceptance of Terms
+                      </h4>
+                      <p className="text-stone-600 text-xs pl-5 font-medium leading-relaxed">
+                        By accessing, browsing, or buying from Dazeen Coffee Co., you agree to comply with and be bound by these comprehensive Terms of Service. These apply globally to all retail clients, subscription memberships, and customized grinding allocations.
+                      </p>
+                    </div>
 
-                  <div className="space-y-2">
-                    <h4 className="text-coffee-950 font-bold font-serif text-lg tracking-tight flex items-center gap-2">
-                      <span className="text-xs font-mono text-zinc-400">02</span>
-                      User Account Responsibilities
-                    </h4>
-                    <p className="text-zinc-600 text-xs sm:text-sm pl-6">
-                      Users are responsible for maintaining the confidentiality of their account credentials, phone numbers, and session keys. Any activities occurring under a user&lsquo;s account are the sole responsibility of the account holder. Users must notify the website administrators immediately of any unauthorized account access or safety breach.
-                    </p>
-                  </div>
+                    <div className="space-y-1.5">
+                      <h4 className="text-coffee-950 font-bold font-serif text-sm tracking-tight flex items-center gap-2 select-none">
+                        <span className="text-[10px] font-mono text-[#5E0ED7]">02</span>
+                        User Account Responsibilities
+                      </h4>
+                      <p className="text-stone-600 text-xs pl-5 font-medium leading-relaxed">
+                        You are responsible for keeping your phone numbers, OTP verification codes, and session tokens strictly confidential. Any purchases or transactions generated through your device remain your responsibilities.
+                      </p>
+                    </div>
 
-                  <div className="space-y-2">
-                    <h4 className="text-coffee-950 font-bold font-serif text-lg tracking-tight flex items-center gap-2">
-                      <span className="text-xs font-mono text-zinc-400">03</span>
-                      Content Sourcing and Taste Guarantees
-                    </h4>
-                    <p className="text-zinc-600 text-xs sm:text-sm pl-6">
-                      All Dazeen designs, roastery formulas, packaging textures, images, and digital coffee profiles are fully protected by intellectual property laws. Users may not reproduce, distribute, modify, create derivative works, or commercially exploit any content without explicit written permission from Shree Deshmukh and Dazeen authorities.
-                    </p>
+                    <div className="space-y-1.5">
+                      <h4 className="text-coffee-950 font-bold font-serif text-sm tracking-tight flex items-center gap-2 select-none">
+                        <span className="text-[10px] font-mono text-[#5E0ED7]">03</span>
+                        Boutique Estate Grounds & Taste Profiles
+                      </h4>
+                      <p className="text-stone-600 text-xs pl-5 font-medium leading-relaxed">
+                        We blend organic specialty roasts. Natural shifts in regional climate can slightly alter batch acidity levels. We do not provide taste-based modifications once pouches are sealed.
+                      </p>
+                    </div>
                   </div>
+                )}
 
-                  <div className="space-y-2">
-                    <h4 className="text-coffee-950 font-bold font-serif text-lg tracking-tight flex items-center gap-2">
-                      <span className="text-xs font-mono text-zinc-400">04</span>
-                      Limitation of Liability
-                    </h4>
-                    <p className="text-zinc-600 text-xs sm:text-sm pl-6">
-                      The website provides content &ldquo;as is&ldquo; without any warranties. The website owners or associate farms shall not be liable for direct, indirect, incidental, consequential, or punitive damages arising from user interactions with the platform, coffee consumption results, or shipping delays.
-                    </p>
-                  </div>
+                {activeTab === 'privacy' && (
+                  <div className="space-y-5">
+                    <div className="space-y-1.5">
+                      <h4 className="text-coffee-950 font-bold font-serif text-sm tracking-tight flex items-center gap-2 select-none">
+                        <span className="text-[10px] font-mono text-[#5E0ED7]">SEC-1</span>
+                        Order Information & Address Logs
+                      </h4>
+                      <p className="text-stone-600 text-xs pl-5 font-medium leading-relaxed">
+                        We collect your full name, contact mobile number, address lines, and landmark exclusively to ship order shipments efficiently and provide live delivery coordinates.
+                      </p>
+                    </div>
 
-                  <div className="space-y-2">
-                    <h4 className="text-coffee-950 font-bold font-serif text-lg tracking-tight flex items-center gap-2">
-                      <span className="text-xs font-mono text-zinc-400">05</span>
-                      User Conduct Guidelines
-                    </h4>
-                    <p className="text-zinc-600 text-xs sm:text-sm pl-6">
-                      Our customer guidelines ensure a healthy digital shopping community:
-                    </p>
-                    <ul className="list-disc pl-12 text-zinc-600 text-xs sm:text-sm space-y-1">
-                      <li>Not upload harmful spam or malicious script content to portal forms</li>
-                      <li>Respect the rights of and communicate supportively with other customers</li>
-                      <li>Avoid activities that could disrupt server or secure gateway operations</li>
-                      <li>Comply with applicable local and international food quality laws</li>
-                    </ul>
-                  </div>
+                    <div className="space-y-1.5">
+                      <h4 className="text-coffee-950 font-bold font-serif text-sm tracking-tight flex items-center gap-2 select-none">
+                        <span className="text-[10px] font-mono text-[#5E0ED7]">SEC-2</span>
+                        Phone Number OTP Protection
+                      </h4>
+                      <p className="text-stone-600 text-xs pl-5 font-medium leading-relaxed">
+                        Your mobile number is solely invoked to secure account access through the Quick OTP Gateway and verify payment updates. We strictly do not rent, distribute, or sell user records to external marketing corporations.
+                      </p>
+                    </div>
 
-                  <div className="space-y-2">
-                    <h4 className="text-coffee-950 font-bold font-serif text-lg tracking-tight flex items-center gap-2">
-                      <span className="text-xs font-mono text-zinc-400">06</span>
-                      Modifications to Terms
-                    </h4>
-                    <p className="text-zinc-600 text-xs sm:text-sm pl-6">
-                      The website reserves the right to modify these terms at any time. Sourced batches, coffee availability prices, shipping logistics, and delivery taxes are subject to shift. Continued use of the website after changes constitutes acceptance of the new terms.
-                    </p>
+                    <div className="space-y-1.5">
+                      <h4 className="text-coffee-950 font-bold font-serif text-sm tracking-tight flex items-center gap-2 select-none">
+                        <span className="text-[10px] font-mono text-[#5E0ED7]">SEC-3</span>
+                        Payment Card & Cookies
+                      </h4>
+                      <p className="text-stone-600 text-xs pl-5 font-medium leading-relaxed">
+                        Online operations are compiled securely through PCI-DSS standard Cashfree payments portals. No credit card or banking PIN records are ever processed locally on our roastery servers.
+                      </p>
+                    </div>
                   </div>
+                )}
 
-                  <div className="space-y-2">
-                    <h4 className="text-coffee-950 font-bold font-serif text-lg tracking-tight flex items-center gap-2">
-                      <span className="text-xs font-mono text-zinc-400">07</span>
-                      Termination Clause
-                    </h4>
-                    <p className="text-zinc-600 text-xs sm:text-sm pl-6">
-                      The website may terminate or suspend user access without prior notice for violations of these terms, malicious transactions attempts, or for any other reason deemed appropriate by the system administration.
-                    </p>
-                  </div>
+                {activeTab === 'refund' && (
+                  <div className="space-y-5">
+                    <div className="space-y-2 border-l-2 border-red-500 pl-3">
+                      <h4 className="text-coffee-950 font-extrabold font-serif text-sm tracking-tight flex items-center gap-1.5 select-none">
+                        ⚠️ Strict Return & Cancellation Condition
+                      </h4>
+                      <p className="text-red-950 text-xs font-bold leading-normal">
+                        Refund is strictly processed ONLY if the package received by you is incorrect (wrong flavor dispatch) or physically damaged/spoiled.
+                      </p>
+                      <p className="text-stone-700 text-[11px] font-medium leading-normal italic">
+                        Refund tabhi hoga agar packet galat ya physically kharab aaye (e.g. tear/spill/damage).
+                      </p>
+                    </div>
 
-                  <div className="space-y-2 pb-6">
-                    <h4 className="text-coffee-950 font-bold font-serif text-lg tracking-tight flex items-center gap-2">
-                      <span className="text-xs font-mono text-zinc-400">08</span>
-                      Governing Law
-                    </h4>
-                    <p className="text-zinc-600 text-xs sm:text-sm pl-6">
-                      These terms are governed by the laws of Pune, Maharashtra, India, without regard to conflict of law principles. All digital transactions, payment settlements, and regional consumer disputes fall under same jurisdiction.
-                    </p>
+                    <div className="space-y-1.5">
+                      <h4 className="text-coffee-950 font-bold font-serif text-sm tracking-tight flex items-center gap-2 select-none">
+                        <span className="text-[10px] font-mono text-[#5E0ED7]">REF-01</span>
+                        Return Claims Process
+                      </h4>
+                      <p className="text-stone-600 text-xs pl-5 font-medium leading-relaxed">
+                        To register a damaged packet claim, please mail clear snapshot images of the unboxing status showing the external courier label and damaged tear sections to <span className="font-bold text-[#5E0ED7]">support@dazeen.in</span> within 24 hours of receiving the shipment.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <h4 className="text-coffee-950 font-bold font-serif text-sm tracking-tight flex items-center gap-2 select-none">
+                        <span className="text-[10px] font-mono text-[#5E0ED7]">REF-02</span>
+                        Reverse Courier Dispatch
+                      </h4>
+                      <p className="text-stone-600 text-xs pl-5 font-medium leading-relaxed">
+                        Once verified, Dazeen logistical desk will schedule a free reverse pickup and request a fresh sealed batch shipment or direct credit to your bank source account within 5-7 business working days.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
+
               </div>
 
               {/* Action buttons at the bottom */}
-              <div className="border-t border-coffee-100 p-6 bg-[#FCFAF7] flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+              <div className="border-t border-coffee-100 p-5 bg-[#FCFAF7] flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 select-none">
                 <div className="flex items-center gap-2 text-xs text-coffee-600">
                   {hasReadToBottom ? (
-                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                    <span className="text-emerald-700 font-bold flex items-center gap-1">
                       <CheckCircle className="w-4 h-4" /> Ready to agree
                     </span>
                   ) : (
-                    <span>Please read to the bottom edge.</span>
+                    <span>Please scroll to the read bottom.</span>
                   )}
                 </div>
 
                 <div className="flex gap-2">
                   <Button
                     onClick={onBackToHome}
+                    type="button"
                     variant="outline"
-                    className="cursor-pointer font-mono font-bold text-xs uppercase tracking-wider h-11 border-coffee-250 hover:bg-coffee-50"
+                    className="cursor-pointer font-mono font-bold text-xs uppercase tracking-wider h-10 border-coffee-250 hover:bg-coffee-50"
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleAgree}
+                    type="button"
                     disabled={!hasReadToBottom}
-                    className="bg-coffee-900 border-coffee-900 text-[#FAF6F0] hover:bg-coffee-800 cursor-pointer font-mono font-black text-xs uppercase tracking-wider h-11 disabled:opacity-50 disabled:cursor-not-allowed px-6"
+                    className="bg-coffee-900 border-coffee-900 text-[#FAF6F0] hover:bg-coffee-800 cursor-pointer font-mono font-black text-xs uppercase tracking-wider h-10 disabled:opacity-50 disabled:cursor-not-allowed px-5"
                   >
                     I Agree
                   </Button>

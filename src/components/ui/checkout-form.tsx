@@ -21,21 +21,49 @@ export interface CheckoutFormProps {
     quantity: number;
   }[];
   onOrderPlaced?: (order: any) => void;
+  initialFullName?: string;
+  initialPhoneNumber?: string;
+  initialPincode?: string;
+  initialAddressLine1?: string;
+  initialAddressLine2?: string;
+  initialCity?: string;
+  initialState?: string;
 }
 
-export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlaced }: CheckoutFormProps) {
+export default function CheckoutForm({ 
+  currentUser, 
+  cartItems = [], 
+  onOrderPlaced,
+  initialFullName,
+  initialPhoneNumber,
+  initialPincode,
+  initialAddressLine1,
+  initialAddressLine2,
+  initialCity,
+  initialState
+}: CheckoutFormProps) {
   // Address State
-  const [fullName, setFullName] = React.useState(currentUser?.displayName || "Vaidehi Deshmukh");
-  const [phoneNumber, setPhoneNumber] = React.useState(currentUser?.phoneNumber || currentUser?.phone || "9876543210");
-  const [pincode, setPincode] = React.useState("577101");
-  const [addressLine1, setAddressLine1] = React.useState(currentUser?.address ? currentUser.address.split(",")[0] : "Flat 301, 3rd Floor, Shanti Residency");
-  const [addressLine2, setAddressLine2] = React.useState(currentUser?.address && currentUser.address.split(",").length > 1 ? currentUser.address.split(",").slice(1).join(", ").trim() : "Chikmagalur Main Town");
-  const [city, setCity] = React.useState("Chikmagalur");
-  const [state, setState] = React.useState("Karnataka");
+  const [fullName, setFullName] = React.useState(initialFullName || currentUser?.displayName || "Vaidehi Deshmukh");
+  const [phoneNumber, setPhoneNumber] = React.useState(initialPhoneNumber || currentUser?.phoneNumber || currentUser?.phone || "9876543210");
+  const [pincode, setPincode] = React.useState(initialPincode || "577101");
+  const [addressLine1, setAddressLine1] = React.useState(initialAddressLine1 || (currentUser?.address ? currentUser.address.split(",")[0] : "Flat 301, 3rd Floor, Shanti Residency"));
+  const [addressLine2, setAddressLine2] = React.useState(initialAddressLine2 || (currentUser?.address && currentUser.address.split(",").length > 1 ? currentUser.address.split(",").slice(1).join(", ").trim() : "Chikmagalur Main Town"));
+  const [city, setCity] = React.useState(initialCity || "Chikmagalur");
+  const [state, setState] = React.useState(initialState || "Karnataka");
 
-  // Sync state if currentUser changes
+  // Sync state if initial values or currentUser changes
   React.useEffect(() => {
-    if (currentUser) {
+    if (initialFullName) setFullName(initialFullName);
+    if (initialPhoneNumber) setPhoneNumber(initialPhoneNumber);
+    if (initialPincode) setPincode(initialPincode);
+    if (initialAddressLine1) setAddressLine1(initialAddressLine1);
+    if (initialAddressLine2) setAddressLine2(initialAddressLine2);
+    if (initialCity) setCity(initialCity);
+    if (initialState) setState(initialState);
+  }, [initialFullName, initialPhoneNumber, initialPincode, initialAddressLine1, initialAddressLine2, initialCity, initialState]);
+
+  React.useEffect(() => {
+    if (currentUser && !initialFullName) {
       if (currentUser.displayName) setFullName(currentUser.displayName);
       const phoneVal = currentUser.phoneNumber || currentUser.phone;
       if (phoneVal) setPhoneNumber(phoneVal);
@@ -47,7 +75,7 @@ export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlace
         }
       }
     }
-  }, [currentUser]);
+  }, [currentUser, initialFullName]);
 
   // Discount/Promo State
   const [promoCode, setPromoCode] = React.useState("");

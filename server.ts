@@ -102,26 +102,55 @@ async function startServer() {
   });
 
   app.get("/api/send-otp", async (req, res) => {
-    const { phone, otpValue } = req.query;
-    const authKey = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
+    const phone = req.query.phone;
+    const otp = req.query.otpValue;
+    const auth = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
 
-    // Sabse pehle check karo ki key kya hai
-    console.log("SERVER_LOG: AuthKey length is", authKey ? authKey.length : "NULL");
+    // Bilkul simple format
+    const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${auth}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${otp}|&numbers=${phone}`;
 
-    if (!authKey || authKey === "undefined") {
-        return res.status(500).send("Critical Error: API Key not loaded on Vercel");
-    }
-
-    const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${otpValue}|&numbers=${phone}`;
-    
     try {
-        const response = await fetch(url);
-        const data = await response.text();
-        console.log("SERVER_LOG: Final Response from Fast2SMS:", data);
-        res.status(200).send(data);
+      const response = await fetch(url);
+      const text = await response.text();
+      
+      // Yahan debug karo ki kya URL ban raha hai
+      console.log("DEBUG_URL:", url); 
+      
+      res.status(200).send(text);
     } catch (error: any) {
-        res.status(500).send(error.message || "Error");
+      res.status(500).send("Error: " + error.message);
     }
+  });
+
+  // API Route for Cashfree webhook
+  app.all("/api/cashfree/webhook", async (req, res) => {
+    if (req.method === "POST") {
+      const paymentData = req.body;
+      
+      // Log karo taaki pata chale data aaya ya nahi
+      console.log("Webhook Received from Cashfree (/api/cashfree/webhook):", paymentData);
+
+      // SABSE ZARURI: Cashfree ko 200 OK bhejo
+      return res.status(200).json({ message: "Webhook received successfully" });
+    }
+
+    // Agar koi aur method hai toh error
+    res.status(405).send("Method Not Allowed");
+  });
+
+  app.all("/api/webhook", async (req, res) => {
+    if (req.method === "POST") {
+      const paymentData = req.body;
+      
+      // Log karo taaki pata chale data aaya ya nahi
+      console.log("Webhook Received from Cashfree (/api/webhook):", paymentData);
+
+      // SABSE ZARURI: Cashfree ko 200 OK bhejo
+      return res.status(200).json({ message: "Webhook received successfully" });
+    }
+
+    // Agar koi aur method hai toh error
+    res.status(405).send("Method Not Allowed");
   });
 
   // API Route for Cashfree order creation
