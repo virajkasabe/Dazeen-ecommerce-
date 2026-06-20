@@ -19,6 +19,12 @@ import {
   CheckCircle, 
   Clock 
 } from "lucide-react";
+import { ContactCard } from "./ui/contact-card";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { notificationService } from "../utils/notifications";
 
 interface PortfolioHeroProps {
   onScrollToSection?: (sectionId: string) => void;
@@ -58,6 +64,11 @@ export default function PortfolioHero({
 }: PortfolioHeroProps) {
   const [showTerms, setShowTerms] = useState(false);
   const [showContact, setShowContact] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
 
   // Robust scrolling/navigation mapping for Dazeen sections
   const handleLinkClick = (id: string) => {
@@ -270,21 +281,6 @@ export default function PortfolioHero({
               <p className="text-[9px] sm:text-[10px] md:text-xs font-semibold tracking-widest uppercase text-coffee-900/80 leading-relaxed">
                 PREMIUM CAFFEINE-FREE SHADE-GROWN FILTER COFFEE SOURCED FROM HIGH-ALTITUDE ESTATES OF WESTERN GHATS
               </p>
-              <div className="flex items-center gap-3.5 mt-2.5 text-[10px] font-bold text-[#5E0ED7] tracking-widest leading-none">
-                <button 
-                  onClick={() => setShowTerms(true)} 
-                  className="hover:underline hover:text-[#5E0ED7]/85 cursor-pointer uppercase py-1"
-                >
-                  Terms
-                </button>
-                <span className="text-coffee-300 font-normal select-none">•</span>
-                <button 
-                  onClick={() => setShowContact(true)} 
-                  className="hover:underline hover:text-[#5E0ED7]/85 cursor-pointer uppercase py-1"
-                >
-                  Contact Us
-                </button>
-              </div>
             </motion.div>
 
             {/* Right: Stacked grand heading: DAZEEN / PURE / CRAFT */}
@@ -389,72 +385,131 @@ export default function PortfolioHero({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-stone-950/70 backdrop-blur-md z-60 flex items-center justify-center p-4 selection:bg-[#5E0ED7]/25 text-stone-900"
+            className="fixed inset-0 bg-stone-950/80 backdrop-blur-md z-60 flex items-center justify-center p-4 sm:p-6"
           >
             <motion.div
               initial={{ scale: 0.94, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.94, opacity: 0, y: 15 }}
-              className="bg-white border border-stone-200 p-6 sm:p-8 rounded-3xl max-w-lg w-full relative space-y-4 shadow-2xl shadow-stone-950/20 max-h-[85vh] overflow-y-auto text-left"
+              className="relative max-w-4xl w-full shadow-3xl max-h-[90vh] overflow-y-auto rounded-3xl"
             >
+              {/* Floating Close Button */}
               <button
                 onClick={() => setShowContact(false)}
-                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-700 transition-all cursor-pointer"
+                className="absolute top-5 right-5 w-10 h-10 rounded-full bg-stone-900 border border-stone-800 hover:border-amber-500 hover:bg-stone-850 flex items-center justify-center text-stone-200 transition-all cursor-pointer z-50 shadow-md"
               >
-                <X className="w-4 h-4 stroke-[2.5]" />
+                <X className="w-5 h-5 stroke-[2.5]" />
               </button>
 
-              <div className="flex items-center gap-2 border-b border-stone-100 pb-3">
-                <Mail className="w-5 h-5 text-emerald-600 animate-pulse" />
-                <h3 className="text-lg font-serif font-bold text-stone-900">Estates & Support</h3>
-              </div>
-
-              <p className="text-xs text-stone-600">
-                Have questions about custom grinds, retail packaging details, or need assistance? We are online 10 AM to 7 PM IST daily.
-              </p>
-
-              <div className="space-y-4 pt-1 text-xs sm:text-sm font-sans">
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 bg-stone-50 rounded-xl text-emerald-600 shrink-0 border border-stone-100">
-                    <Phone className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-stone-500 font-semibold text-[10px] uppercase tracking-wider font-mono">Helpline Calls & WhatsApp</h4>
-                    <p className="text-stone-950 font-mono mt-0.5 font-bold">+91 98345 00977</p>
-                    <p className="text-[10px] text-stone-400">Expected response: &lt; 5 minutes</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 bg-stone-50 rounded-xl text-emerald-600 shrink-0 border border-stone-100">
-                    <Mail className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-stone-500 font-semibold text-[10px] uppercase tracking-wider font-mono">Support and Partnership Email</h4>
-                    <p className="text-stone-950 font-mono mt-0.5 font-bold">support@dazeen.in</p>
-                    <p className="text-[10px] text-stone-500 font-mono">Inquire for custom bulk order guidelines</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="p-2.5 bg-stone-50 rounded-xl text-emerald-600 shrink-0 border border-stone-100">
-                    <MapPin className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-stone-500 font-semibold text-[10px] uppercase tracking-wider font-mono">Roastery Address</h4>
-                    <p className="text-stone-700 mt-0.5 text-xs">Baba Budangiri Estates No. 44, Sourcing Station, Western Ghats, Karnataka - 577101</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <a
-                  href="mailto:support@dazeen.in"
-                  className="w-full py-2.5 bg-[#5E0ED7] hover:bg-[#5E0ED7]/90 text-white font-bold rounded-xl text-xs uppercase tracking-widest block text-center cursor-pointer transition-all shadow-md mt-2"
+              <ContactCard
+                title="Get in touch"
+                description="If you have any questions regarding our Boutique Coffees, Custom Grind requests, or need bulk ordering support, fill out the form here. We do our best to respond within 1 business day."
+                contactInfo={[
+                  {
+                    icon: Mail,
+                    label: 'Email Support',
+                    value: 'support@dazeen.in',
+                  },
+                  {
+                    icon: Phone,
+                    label: 'Call / WhatsApp',
+                    value: '+91 98345 00977',
+                  },
+                  {
+                    icon: MapPin,
+                    label: 'Address HQ',
+                    value: 'Pune, Maharashtra, India',
+                    className: 'col-span-1 md:col-span-2 lg:col-span-1',
+                  }
+                ]}
+              >
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!contactName.trim() || !contactEmail.trim() || !contactMessage.trim()) {
+                      notificationService.send("⚠️ Incomplete Form", "Please fill in your Name, Email and Message first.");
+                      return;
+                    }
+                    setIsSubmittingContact(true);
+                    setTimeout(() => {
+                      notificationService.send("Query Sent Successfully! ☕✨", `Thank you ${contactName}, we've received your request! Our representative will call or mail back soon.`);
+                      setIsSubmittingContact(false);
+                      setContactName("");
+                      setContactEmail("");
+                      setContactPhone("");
+                      setContactMessage("");
+                      setShowContact(false);
+                    }, 1200);
+                  }}
+                  className="w-full space-y-4"
                 >
-                  SEND DIRECT SUPPORT EMAIL
-                </a>
-              </div>
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <Label htmlFor="contact-name" className="text-stone-300 text-xs font-semibold font-mono tracking-wider">
+                      Name *
+                    </Label>
+                    <Input 
+                      id="contact-name"
+                      type="text" 
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      placeholder="Your Name" 
+                      className="bg-stone-900 border-stone-800 focus:border-amber-500 rounded-xl"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <Label htmlFor="contact-email" className="text-stone-300 text-xs font-semibold font-mono tracking-wider">
+                      Email address *
+                    </Label>
+                    <Input 
+                      id="contact-email"
+                      type="email" 
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      placeholder="you@domain.com" 
+                      className="bg-stone-900 border-stone-800 focus:border-amber-500 rounded-xl"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <Label htmlFor="contact-phone" className="text-stone-300 text-xs font-semibold font-mono tracking-wider">
+                      Phone Number (Optional)
+                    </Label>
+                    <Input 
+                      id="contact-phone"
+                      type="tel" 
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                      placeholder="+91 XXXXX XXXXX" 
+                      className="bg-stone-900 border-stone-800 focus:border-amber-500 rounded-xl"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 text-left">
+                    <Label htmlFor="contact-message" className="text-stone-300 text-xs font-semibold font-mono tracking-wider">
+                      Message / Request *
+                    </Label>
+                    <Textarea 
+                      id="contact-message"
+                      value={contactMessage}
+                      onChange={(e) => setContactMessage(e.target.value)}
+                      placeholder="How can we assist you with our Premium Coffees?" 
+                      className="bg-stone-900 border-stone-800 focus:border-amber-500 min-h-[90px] rounded-xl"
+                      required
+                    />
+                  </div>
+
+                  <Button 
+                    className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-black tracking-widest uppercase py-3 rounded-xl cursor-pointer shadow-lg transition-transform hover:scale-[1.01]" 
+                    type="submit"
+                    disabled={isSubmittingContact}
+                  >
+                    {isSubmittingContact ? "Sending..." : "Submit Inquiry"}
+                  </Button>
+                </form>
+              </ContactCard>
             </motion.div>
           </motion.div>
         )}

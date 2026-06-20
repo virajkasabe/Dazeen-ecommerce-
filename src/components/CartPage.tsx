@@ -6,6 +6,8 @@ import {
 } from "lucide-react";
 import { CartItem } from "../types";
 import { notificationService } from "../utils/notifications";
+import CheckoutForm from "./ui/checkout-form";
+import { RadioGroup3D } from "./ui/3d-radio-group";
 
 declare global {
   interface Window {
@@ -284,7 +286,8 @@ export default function CartPage({
       if (serverResult.success === true && window.Cashfree) {
         // Initialize real SDK and checkout
         try {
-          const cashfree = window.Cashfree({ mode: "production" });
+          const isProd = String(serverResult.order_status || "").length > 0;
+          const cashfree = window.Cashfree({ mode: isProd ? "production" : "sandbox" });
           setIsProcessingPay(false);
           
           cashfree.checkout({
@@ -292,17 +295,20 @@ export default function CartPage({
             returnUrl: `${window.location.origin}/?order_id=${uniqueOrderId}&payment_status=success`
           });
         } catch (sdkError: any) {
-          console.error("SDK initialization crashed, using premium safety fallback: ", sdkError);
-          // Auto-trigger clean sandbox dialog box
-          setShowSimulatedGateway(true);
+          console.error("SDK initialization crashed:", sdkError);
+          setSubmitError(`Cashfree SDK Error: ${sdkError?.message || sdkError || "SDK initialization failed."}`);
+          setIsProcessingPay(false);
         }
       } else {
-        // Server rejected or keys failed - switch to beautiful fully-functional Cashfree simulated gateway screen
-        setShowSimulatedGateway(true);
+        // Server rejected or keys failed - explicitly output the real error on screen for the developer/user!
+        const errMsg = serverResult.error || "Failed to initiate Cashfree order. Verify credentials configured in environment variables.";
+        setSubmitError(`Cashfree Payment Gateway Error: ${errMsg}`);
+        setIsProcessingPay(false);
       }
     } catch (apiError: any) {
-      console.warn("Express server connection issue, running local offline checkout fallback", apiError);
-      setShowSimulatedGateway(true);
+      console.warn("Express server connection issue during pay setup: ", apiError);
+      setSubmitError(`Local API connection failed: ${apiError?.message || apiError}`);
+      setIsProcessingPay(false);
     }
   };
 
@@ -545,92 +551,35 @@ export default function CartPage({
       </div>
 
       {/* Checkout Wizard Progression Steps Timeline */}
-      <div className="max-w-xl mx-auto mb-10 bg-coffee-50 border border-coffee-200 p-4 rounded-2xl shadow-inner relative">
-        <div className="flex items-center justify-between relative">
-          
-          {/* Background Connector Bar */}
-          <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-coffee-200 z-0"></div>
-          <div 
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-[#5E0ED7] transition-all duration-500 z-0"
-            style={{ 
-              width: checkoutStep === "cart" ? "0%" : checkoutStep === "address" ? "50%" : "100%" 
-            }}
-          ></div>
-
-          {/* Timeline Step 1: Cart Items */}
-          <button 
-            type="button"
-            onClick={() => setCheckoutStep("cart")}
-            className="flex flex-col items-center relative z-10 focus:outline-none focus:ring-0 group"
-          >
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 border ${
-              checkoutStep === "cart" || checkoutStep === "address" || checkoutStep === "payment"
-                ? "bg-[#5E0ED7] border-[#5E0ED7] text-white scale-110 shadow-md shadow-[#5E0ED7]/20"
-                : "bg-white border-coffee-300 text-coffee-800 hover:border-coffee-500"
-            }`}>
-              1
-            </div>
-            <span className={`text-[10px] font-bold font-mono tracking-widest uppercase mt-2 ${
-              checkoutStep === "cart" ? "text-[#5E0ED7]" : "text-coffee-600"
-            }`}>
-              Cart Items
-            </span>
-          </button>
-
-          {/* Timeline Step 2: Delivery Address Address */}
-          <button 
-            type="button"
-            onClick={() => {
-              if (cart.length > 0) {
-                setCheckoutStep("address");
-              }
-            }}
-            disabled={cart.length === 0}
-            className="flex flex-col items-center relative z-10 focus:outline-none focus:ring-0 group disabled:opacity-50"
-          >
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 border ${
-              checkoutStep === "address" || checkoutStep === "payment"
-                ? "bg-[#5E0ED7] border-[#5E0ED7] text-white scale-110 shadow-md shadow-[#5E0ED7]/20"
-                : "bg-white border-coffee-300 text-coffee-800"
-            }`}>
-              2
-            </div>
-            <span className={`text-[10px] font-bold font-mono tracking-widest uppercase mt-2 ${
-              checkoutStep === "address" ? "text-[#5E0ED7]" : "text-coffee-600"
-            }`}>
-              Address
-            </span>
-          </button>
-
-          {/* Timeline Step 3: Payment Option Details */}
-          <button 
-            type="button"
-            onClick={() => {
-              // Quick check
+      <div className="max-w-xl mx-auto mb-10 bg-[#0c0a09] border border-stone-800/80 p-6 rounded-3xl shadow-2xl relative flex flex-col items-center">
+        <RadioGroup3D 
+          value={checkoutStep === "cart" ? "cart" : checkoutStep === "address" ? "address" : "payment"}
+          onChange={(newStep) => {
+            setSubmitError("");
+            if (newStep === "cart") {
+              setCheckoutStep("cart");
+            } else if (newStep === "address") {
+              if (cart.length === 0) return;
+              setCheckoutStep("address");
+            } else if (newStep === "payment") {
               if (!fullName || !phoneNumber || phoneNumber.length < 10 || !pincode || pincode.length !== 6 || !addressLine1 || !addressLine2 || !city || !state) {
-                setSubmitError("Please fill out and complete all address details first.");
+                setSubmitError("Please fill out and complete all address details first before proceeding to Payment.");
                 return;
               }
               setCheckoutStep("payment");
-            }}
-            disabled={!fullName || !pincode || pincode.length !== 6}
-            className="flex flex-col items-center relative z-10 focus:outline-none focus:ring-0 group disabled:opacity-55"
-          >
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 border ${
-              checkoutStep === "payment"
-                ? "bg-[#5E0ED7] border-[#5E0ED7] text-white scale-110 shadow-md shadow-[#5E0ED7]/20"
-                : "bg-white border-coffee-300 text-coffee-800"
-            }`}>
-              3
-            </div>
-            <span className={`text-[10px] font-bold font-mono tracking-widest uppercase mt-2 ${
-              checkoutStep === "payment" ? "text-[#5E0ED7]" : "text-coffee-600"
-            }`}>
-              Payment
-            </span>
-          </button>
-
-        </div>
+            }
+          }}
+          disabledSteps={{
+            cart: false,
+            address: cart.length === 0,
+            payment: cart.length === 0 || !fullName || pincode.length !== 6
+          }}
+        />
+        {submitError && (
+          <p className="text-red-500 font-medium text-xs mt-3 select-none text-center">
+            ⚠️ {submitError}
+          </p>
+        )}
       </div>
 
       {/* Main interactive grid content */}
@@ -1185,196 +1134,18 @@ export default function CartPage({
             STEP 3: SECURE PAYMENT SELECTION (COD/ONLINE) 
             ========================================== */}
         {checkoutStep === "payment" && (
-          <>
-            {/* Left Column: Ask payment type */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm space-y-6">
-                
-                <div className="border-b border-coffee-100 pb-4">
-                  <span className="text-[9px] font-mono font-bold text-[#5E0ED7] uppercase tracking-widest bg-purple-50 px-2 py-0.5 rounded-md">
-                    Payment Gateway Security
-                  </span>
-                  <h3 className="text-xl font-serif font-bold text-coffee-950 mt-1.5">
-                    Choose Your Preferred Payment Option
-                  </h3>
-                  <p className="text-xs text-coffee-600">
-                    We support secure instant online transactions or payment upon safe physical box delivery.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  
-                  {/* Option 1: Secure Cashfree Online PG */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("online")}
-                    disabled={isProcessingPay}
-                    className={`w-full flex items-start gap-4 p-4 border-2 rounded-2xl text-left cursor-pointer transition-all ${
-                      paymentMethod === "online"
-                        ? "bg-purple-50/20 border-[#5E0ED7] text-coffee-950 shadow-sm"
-                        : "bg-white border-coffee-200 hover:bg-coffee-50/50 text-coffee-700"
-                    }`}
-                  >
-                    <span className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${paymentMethod === "online" ? "border-[#5E0ED7]" : "border-coffee-300"}`}>
-                      {paymentMethod === "online" && <span className="w-3 h-3 rounded-full bg-[#5E0ED7]" />}
-                    </span>
-                    <div className="space-y-1">
-                      <span className="text-sm font-bold block text-coffee-950 flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-[#5E0ED7]" />
-                        Pay Online Instantly
-                      </span>
-                      <p className="text-xs text-coffee-600 leading-relaxed">
-                        Cards (Visa/Mastercard/Rupay), UPI Apps (Google Pay, PhonePe, Paytm, BHIM), and Netbanking via encrypted Cashfree network.
-                      </p>
-                    </div>
-                  </button>
-
-                  {/* Option 2: Cash On Delivery (COD) */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod("cod")}
-                    disabled={isProcessingPay}
-                    className={`w-full flex items-start gap-4 p-4 border-2 rounded-2xl text-left cursor-pointer transition-all ${
-                      paymentMethod === "cod"
-                        ? "bg-purple-50/20 border-[#5E0ED7] text-coffee-950 shadow-sm"
-                        : "bg-white border-coffee-200 hover:bg-coffee-50/50 text-coffee-700"
-                    }`}
-                  >
-                    <span className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${paymentMethod === "cod" ? "border-[#5E0ED7]" : "border-coffee-300"}`}>
-                      {paymentMethod === "cod" && <span className="w-3 h-3 rounded-full bg-[#5E0ED7]" />}
-                    </span>
-                    <div className="space-y-1">
-                      <span className="text-sm font-bold block text-coffee-950 flex items-center gap-2">
-                        <Truck className="w-4 h-4 text-emerald-600" />
-                        Cash On Delivery (COD)
-                      </span>
-                      <p className="text-xs text-coffee-600 leading-relaxed">
-                        Choose to pay with physical Cash or UPI scanner code when Delhivery / Bluedart rider safely delivers your parcel at your doorstep.
-                      </p>
-                    </div>
-                  </button>
-
-                </div>
-
-                {/* Back Link */}
-                <div className="pt-3">
-                  <button
-                    onClick={() => setCheckoutStep("address")}
-                    className="text-xs font-bold font-mono uppercase text-[#5E0ED7] hover:underline"
-                  >
-                    ← Edit Shipping address details
-                  </button>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Right Column: Final Subtotal invoicing and Confirm Option Button */}
-            <div className="lg:col-span-5 space-y-6">
-              
-              {/* Delivery info summary block */}
-              <div className="bg-white rounded-2xl border border-coffee-200 p-5 shadow-sm text-xs text-coffee-800">
-                <h4 className="text-xs font-bold font-mono tracking-wider uppercase text-coffee-950 border-b border-coffee-100 pb-2 mb-3">
-                  Consignee & Delivery Summary
-                </h4>
-                <div className="space-y-1.5 font-medium">
-                  <p><span className="text-coffee-500 font-normal">Deliver To:</span> {fullName}</p>
-                  <p><span className="text-coffee-500 font-normal">Contact:</span> +91 {phoneNumber}</p>
-                  <p className="line-clamp-2 leading-relaxed">
-                    <span className="text-coffee-500 font-normal font-sans">Postal Address:</span> {addressLine1}, {addressLine2} {landmark ? `(${landmark})` : ""}, {city}, {state} - <span className="font-mono font-bold text-coffee-950">{pincode}</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Pricing breakdown and Confirm Action button */}
-              <div className="bg-white rounded-2xl border border-coffee-200 p-5 sm:p-6 shadow-sm space-y-5 text-coffee-950">
-                <h3 className="text-sm font-serif font-bold border-b border-coffee-100 pb-3 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-coffee-900" />
-                  <span>Interactive Checkout Token Invoice</span>
-                </h3>
-
-                <div className="space-y-3.5 text-xs text-coffee-850">
-                  <div className="flex justify-between">
-                    <span>Items Subtotal</span>
-                    <span className="font-mono font-bold">₹{totals.subtotal}</span>
-                  </div>
-
-                  {totals.discount > 0 && (
-                    <div className="flex justify-between text-green-700">
-                      <span>Applied Coupon Less</span>
-                      <span className="font-mono font-bold">- ₹{totals.discount}</span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between pt-2 border-t border-coffee-100/60">
-                    <div className="space-y-0.5">
-                      <span className="font-bold">GST Tax (exactly 5%)</span>
-                      <span className="text-[10px] text-coffee-500 block leading-tight">
-                        5% levy assessed on ₹{totals.priceAfterDiscount}
-                      </span>
-                    </div>
-                    <span className="font-mono font-bold">₹{totals.gstAmount}</span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span>Express Fast Shipping</span>
-                    <span className="font-mono font-bold">
-                      {totals.shippingCharge === 0 ? "FREE" : `₹${totals.shippingCharge}`}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-baseline border-t border-coffee-200 pt-4 text-base font-serif font-bold text-coffee-950">
-                    <span>Grand Total Payable</span>
-                    <span className="font-mono text-xl text-[#5E0ED7] font-extrabold">₹{totals.finalAmount}</span>
-                  </div>
-                </div>
-
-                {/* Submit errors inside Invoice box */}
-                {submitError && (
-                  <div className="bg-red-50 text-red-700 p-3 rounded-xl border border-red-200 text-xs font-semibold flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{submitError}</span>
-                  </div>
-                )}
-
-                {/* Confirm Action Button */}
-                {paymentMethod === "online" ? (
-                  <button
-                    onClick={handlePayNow}
-                    disabled={isProcessingPay}
-                    className={`w-full py-4 rounded-xl text-xs font-bold font-mono tracking-widest uppercase flex items-center justify-center gap-2.5 cursor-pointer shadow-lg transition-all ${
-                      isProcessingPay
-                        ? "bg-coffee-900 text-coffee-300 cursor-not-allowed animate-pulse"
-                        : "bg-gradient-to-r from-[#5E0ED7] to-purple-600 hover:from-[#5E0ED7]/90 hover:to-purple-700 text-white shadow-[#5E0ED7]/15"
-                    }`}
-                  >
-                    <CreditCard className="w-4.5 h-4.5" />
-                    <span>{isProcessingPay ? "Processing Secure Gateway..." : `Confirm & Pay ₹${totals.finalAmount}`}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handlePlaceCodOrder}
-                    disabled={isProcessingPay}
-                    className={`w-full py-4 rounded-xl text-xs font-bold font-mono tracking-widest uppercase flex items-center justify-center gap-2.5 cursor-pointer shadow-lg transition-all ${
-                      isProcessingPay
-                        ? "bg-coffee-900 text-coffee-300 cursor-not-allowed animate-pulse"
-                        : "bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-emerald-600/15"
-                    }`}
-                  >
-                    <Truck className="w-4.5 h-4.5" />
-                    <span>{isProcessingPay ? "Logging COD Request..." : `Confirm COD Order (₹${totals.finalAmount})`}</span>
-                  </button>
-                )}
-
-                {/* Privacy Badge */}
-                <div className="pt-3 border-t border-coffee-100 text-[9px] font-mono text-coffee-500 space-y-1 text-center">
-                  <p>🔒 End-to-end safe connection guaranteed by PCI-DSS</p>
-                </div>
-
-              </div>
-
-            </div>
-          </>
+          <div className="col-span-12">
+            <CheckoutForm 
+              currentUser={currentUser}
+              cartItems={cart}
+              onOrderPlaced={(order) => {
+                setTimeout(() => {
+                  onClearCart();
+                  onSetView("tracking");
+                }, 4000);
+              }}
+            />
+          </div>
         )}
 
       </div>

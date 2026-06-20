@@ -11,13 +11,71 @@ async function startServer() {
 
   app.use(express.json());
 
+  // API Route for Fast2SMS OTP Senders
+  app.post("/api/sms/send-otp", async (req, res) => {
+    try {
+      const { phone, otp } = req.body;
+      const apiKey = (process.env.FAST2SMS_AUTH_KEY || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP").trim();
+
+      if (!apiKey) {
+        return res.status(200).json({
+          success: false,
+          error: "Authorization failure: Fast2SMS API key is blank."
+        });
+      }
+
+      console.log(`Sending Fast2SMS OTP (${otp}) to phone: ${phone}`);
+
+      // Fast2SMS bulkV2 parameters format:
+      // headers: "authorization": "API_KEY"
+      // body JSON: { "route": "otp", "variables_values": otp, "numbers": phone }
+      const payload = {
+        route: "otp",
+        variables_values: String(otp),
+        numbers: String(phone),
+      };
+
+      const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
+        method: "POST",
+        headers: {
+          "authorization": apiKey,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.return) {
+        console.error("Fast2SMS gateway returned error / rejection:", data);
+        return res.status(200).json({
+          success: false,
+          error: data.message || "Failed to deliver SMS. Check if Fast2SMS balance is active or the credentials are valid.",
+          details: data
+        });
+      }
+
+      res.json({
+        success: true,
+        data
+      });
+    } catch (err: any) {
+      console.error("Connection error in /api/sms/send-otp endpoint:", err);
+      res.status(200).json({
+        success: false,
+        error: "Fast2SMS Connection failed. Check server logs.",
+        message: err.message
+      });
+    }
+  });
+
   // API Route for Cashfree order creation
   app.post("/api/cashfree/create-order", async (req, res) => {
     try {
       const { orderId, amount, customerName, customerEmail, customerPhone } = req.body;
       
-      const appId = (process.env.CASHFREE_APP_ID 12821375de78fc2e2c8d6fefc657312821|| "").trim();
-      const secretKey = (process.env.CASHFREE_SECRET_KEY cfsk_ma_prod_b796c278fa2180b98a4bad64d416d12b_223824f9|| "").trim();
+      const appId = (process.env.CASHFREE_APP_ID || "").trim();
+      const secretKey = (process.env.CASHFREE_SECRET_KEY || "").trim();
       
       if (!appId || !secretKey) {
         return res.status(200).json({
@@ -26,11 +84,9 @@ async function startServer() {
         });
       }
       
-      // const cashfree = Cashfree({ mode: "production" });
-      
+      // Determine if keys are sandbox or production based on secret key prefix
       const isProduction = secretKey.startsWith("cfsk_ma_prod_");
-      const url = "https://api.cashfree.com/pg/orders"; 
-      
+      const url = isProduction 
         ? "https://api.cashfree.com/pg/orders" 
         : "https://sandbox.cashfree.com/pg/orders";
 

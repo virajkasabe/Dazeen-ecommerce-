@@ -7,11 +7,14 @@ import { PRODUCTS, REVIEWS } from "./data";
 
 import Navbar from "./components/Navbar";
 import PortfolioHero from "./components/PortfolioHero";
-import ProductCard from "./components/ProductCard";
+import ProductSlider from "./components/ProductSlider";
+import ProductDetailsModal from "./components/ProductDetailsModal";
 import BrewSimulator from "./components/BrewSimulator";
+import { DisplayCardsDemo } from "./components/ui/display-cards-demo";
+import { RadialOrbitalTimelineDemo } from "./components/ui/radial-orbital-timeline-demo";
+import { TestimonialsDemo } from "./components/ui/testimonials-columns-demo";
 import BenefitsSection from "./components/BenefitsSection";
 import AboutMe from "./components/AboutMe";
-import FeedbackSlider from "./components/FeedbackSlider";
 import Footer from "./components/Footer";
 
 
@@ -20,6 +23,9 @@ import LoginPage from "./components/LoginPage";
 import OrderTrackingPage from "./components/OrderTrackingPage";
 import AdminPanel from "./components/AdminPanel";
 import CartPage from "./components/CartPage";
+import TermsPage from "./components/TermsPage";
+import ContactModal from "./components/ContactModal";
+import { Select, SelectOption } from "./components/ui/animated-select-1";
 
 import { notificationService } from "./utils/notifications";
 
@@ -33,11 +39,14 @@ export default function App() {
     const savedAdmin = localStorage.getItem("dazeen_user_is_admin");
     return savedAdmin ? JSON.parse(savedAdmin) : false;
   });
-  const [currentView, setCurrentView] = useState<"main" | "login" | "tracking" | "admin" | "cart">("main");
+  const [currentView, setCurrentView] = useState<"main" | "login" | "tracking" | "admin" | "cart" | "terms">("main");
+  const [showContactModal, setShowContactModal] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>(() => {
     const savedProds = localStorage.getItem("dazeen_products_cache_v1");
     return savedProds ? JSON.parse(savedProds) : PRODUCTS;
   });
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState<boolean>(false);
 
   // Marketing Notification Permission State
   const [notifPermission, setNotifPermission] = useState<any>(() => {
@@ -261,6 +270,7 @@ export default function App() {
         onOpenLogin={() => setCurrentView("login")}
         currentView={currentView}
         onSetView={setCurrentView}
+        onOpenContact={() => setShowContactModal(true)}
       />
 
       {/* Main Core Content Sections */}
@@ -293,42 +303,37 @@ export default function App() {
               </p>
             </div>
 
-            {/* Premium Filtering Buttons */}
-            <div className="flex flex-wrap gap-2 pt-4 md:pt-0">
-              {["All", "Medium", "Dark", "Gourmet"].map((tab) => {
-                const active = roastFilter === tab;
-                return (
-                  <button
-                    key={tab}
-                    onClick={() => setRoastFilter(tab)}
-                    className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wider transition-all cursor-pointer ${
-                      active
-                        ? "bg-coffee-900 text-[#FAF6F0] shadow-md border-coffee-900"
-                        : "bg-white text-coffee-700 border border-coffee-250 hover:bg-coffee-100/50"
-                    }`}
-                  >
-                    {tab === "All" ? "All Blends" : tab === "Gourmet" ? "Gourmet Flavoured" : `${tab} Roast`}
-                  </button>
-                );
-              })}
+            {/* Premium Filtering Select Dropdown */}
+            <div className="pt-4 md:pt-0 z-10 relative">
+              <Select value={roastFilter} setValue={setRoastFilter} placeholder="Filter Coffee Blends">
+                <SelectOption value="All">All Blends</SelectOption>
+                <SelectOption value="Medium">Medium Roast</SelectOption>
+                <SelectOption value="Dark">Dark Roast</SelectOption>
+                <SelectOption value="Gourmet">Gourmet Flavoured</SelectOption>
+              </Select>
             </div>
           </div>
 
-          {/* Core Grid Cards Showcase */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-            {filteredProducts.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
-          </div>
+          {/* Core Grid Cards Showcase with Interactive Sliding Layout */}
+          <ProductSlider
+            products={filteredProducts}
+            onAddToCart={handleAddToCart}
+            onShowDetails={(p) => {
+              setSelectedProduct(p);
+              setIsDetailsModalOpen(true);
+            }}
+          />
 
         </section>
 
+        {/* Interactive Feature Philosophy Display Cards */}
+        <DisplayCardsDemo />
+
         {/* Barista Virtual Brewing Guide and Timer */}
         <BrewSimulator />
+
+        {/* Radial Orbital Timeline depicting Dazeen's journey, milestones, and active update */}
+        <RadialOrbitalTimelineDemo />
 
         {/* Scientific Comparison & Caffeine-Free benefits section */}
         <div id="why-dazeen">
@@ -337,11 +342,11 @@ export default function App() {
 
         {/* About Me Section - Focuses on Dazeen's values & progressive scroll reveal */}
         <div id="about-us">
-          <AboutMe />
+          <AboutMe onContactClick={() => setShowContactModal(true)} />
         </div>
 
-        {/* Customer Testimonials Carousel section */}
-        <FeedbackSlider />
+        {/* Customer Testimonials Column section */}
+        <TestimonialsDemo />
       </>
     )}
 
@@ -390,11 +395,23 @@ export default function App() {
           />
         )}
 
+        {currentView === "terms" && (
+          <TermsPage
+            onBackToHome={() => setCurrentView("main")}
+          />
+        )}
+
       </main>
+
+      {/* Global Contact Us Overlay Modal */}
+      <ContactModal 
+        isOpen={showContactModal} 
+        onClose={() => setShowContactModal(false)} 
+      />
 
       {/* Brand Footer - Shown only on Home screen */}
       {currentView === "main" && (
-        <Footer onNavigate={handleNavigate} />
+        <Footer onNavigate={handleNavigate} onSetView={setCurrentView} />
       )}
 
       {/* Dynamic Slide-in Shopping Cart Drawer */}
@@ -412,6 +429,17 @@ export default function App() {
       )}
 
 
+
+      {/* Product Details Modal (Inform Page) */}
+      <ProductDetailsModal
+        product={selectedProduct}
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedProduct(null);
+        }}
+        onAddToCart={handleAddToCart}
+      />
 
       {/* Floating Permission Bar - Pure minimal look */}
       <AnimatePresence>

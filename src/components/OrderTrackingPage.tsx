@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, MapPin, Calendar, Clock, ShoppingBag, ArrowRight, Truck, Package, HelpCircle, CheckCircle, Download, FileText } from "lucide-react";
 import { Product } from "../types";
+import { OrderTracking } from "./ui/order-tracking";
+import { OrderStatus } from "./ui/order-status-tracker";
+import { RatingInteraction } from "./ui/emoji-rating";
 
 interface TrackingProps {
   currentUser: any;
@@ -14,6 +17,63 @@ export default function OrderTrackingPage({ currentUser, onOpenLogin }: Tracking
   const [userOrders, setUserOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [errorRec, setErrorRec] = useState<string | null>(null);
+  const [orderView, setOrderView] = useState<"status" | "timeline">("status");
+
+  // Handler to set order status directly to Delivered/Complete
+  const handleMarkAsDelivered = (orderId: string) => {
+    try {
+      const cached = localStorage.getItem("dazeen_placed_orders_v1");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const updated = parsed.map((o: any) => {
+          if (o.id.toLowerCase() === orderId.toLowerCase()) {
+            return { ...o, status: "Delivered", updatedAt: new Date().toISOString() };
+          }
+          return o;
+        });
+        localStorage.setItem("dazeen_placed_orders_v1", JSON.stringify(updated));
+        
+        const found = updated.find((o: any) => o.id.toLowerCase() === orderId.toLowerCase());
+        setTrackedOrder(found);
+        
+        if (currentUser) {
+          const filtered = updated.filter((o: any) => o.userId === currentUser.uid);
+          filtered.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setUserOrders(filtered);
+        }
+      }
+    } catch (e) {
+      console.error("Error setting order to delivered:", e);
+    }
+  };
+
+  // Handler to submit rating score
+  const handleRatingSubmit = (orderId: string, rating: number) => {
+    try {
+      const cached = localStorage.getItem("dazeen_placed_orders_v1");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const updated = parsed.map((o: any) => {
+          if (o.id.toLowerCase() === orderId.toLowerCase()) {
+            return { ...o, rating, ratedAt: new Date().toISOString() };
+          }
+          return o;
+        });
+        localStorage.setItem("dazeen_placed_orders_v1", JSON.stringify(updated));
+        
+        const found = updated.find((o: any) => o.id.toLowerCase() === orderId.toLowerCase());
+        setTrackedOrder(found);
+        
+        if (currentUser) {
+          const filtered = updated.filter((o: any) => o.userId === currentUser.uid);
+          filtered.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setUserOrders(filtered);
+        }
+      }
+    } catch (e) {
+      console.error("Error saving rating:", e);
+    }
+  };
 
   // Status mapping to helper steps
   const STATUS_STEPS = [
@@ -65,6 +125,7 @@ export default function OrderTrackingPage({ currentUser, onOpenLogin }: Tracking
         const found = parsed.find((o: any) => o.id.toLowerCase() === formattedId.toLowerCase());
         if (found) {
           setTrackedOrder(found);
+          setOrderView("status");
           setLoading(false);
           return;
         }
@@ -240,6 +301,7 @@ Savor the rich complex aromas of our estates, sleep perfectly!
                     key={o.id}
                     onClick={() => {
                       setTrackedOrder(o);
+                      setOrderView("status");
                       setErrorRec(null);
                     }}
                     className={`w-full text-left py-3 px-2 text-xs transition-all flex justify-between items-center cursor-pointer border-b border-stone-100 ${
@@ -305,56 +367,144 @@ Savor the rich complex aromas of our estates, sleep perfectly!
                 </div>
 
                 {/* Tracking Progress Timeline */}
-                {trackedOrder.status === "Cancelled" ? (
-                  <div className="text-rose-800 py-5 text-center space-y-2">
-                    <p className="font-bold text-sm">❌ Order Cancelled</p>
-                    <p className="text-xs">This order has been cancelled and refunded. If you have questions, contact us.</p>
-                  </div>
+                {orderView === "status" ? (
+                  <OrderStatus
+                    illustrationUrl="https://www.thiings.co/_next/image?url=https%3A%2F%2Flftz25oez4aqbxpq.public.blob.vercel-storage.com%2Fimage-HNciDluT0NAzIwovOE2g7EpZORt7CQ.png&w=320&q=75"
+                    statusTitle="Track Order"
+                    statusDescription={`Package status: ${trackedOrder.status}`}
+                    item={{
+                      imageUrl: trackedOrder.items && trackedOrder.items[0]?.product?.image 
+                        ? trackedOrder.items[0].product.image 
+                        : "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=250&h=250&fit=crop",
+                      name: trackedOrder.items && trackedOrder.items[0]?.product?.name 
+                        ? trackedOrder.items[0].product.name 
+                        : "Premium Blend Coffee Bag",
+                      details: trackedOrder.items && trackedOrder.items[0]
+                        ? `Roast: ${trackedOrder.items[0].product.roastLevel} • Qty: ${trackedOrder.items[0].quantity} Bag(s)`
+                        : "Craft Roast Selection",
+                      price: trackedOrder.totalPrice,
+                    }}
+                    summary={[
+                      { label: "Order ID", value: trackedOrder.id },
+                      { label: "Customer Name", value: trackedOrder.fullName },
+                      { label: "Phone Number", value: trackedOrder.phoneNumber },
+                      { label: "Shipping Address", value: `${trackedOrder.streetAddress}, PIN: ${trackedOrder.pinCode}` },
+                      { label: "Delivery Status", value: trackedOrder.status === "Delivered" ? "Delivered successfully" : "2-3 Days Priority Courier Delivery" },
+                    ]}
+                    trackingStatus={trackedOrder.status === "Cancelled" ? "This order has been cancelled" : `Order is in status: ${trackedOrder.status}`}
+                    onTrackOrder={() => setOrderView("timeline")}
+                  />
                 ) : (
                   <div className="space-y-6">
-                    <h4 className="font-serif text-sm font-bold text-stone-900">Shipment Timeline</h4>
-                    <div className="relative pl-6 border-l-2 border-stone-200 space-y-8 py-2">
-                      {STATUS_STEPS.map((step, idx) => {
-                        const isCompleted = idx <= activeStepIdx;
-                        const isCurrent = idx === activeStepIdx;
-                        const IconComponent = step.icon;
-                        
-                        return (
-                           <div key={idx} className="relative">
-                            {/* Marker Icon Dot */}
-                            <div className={`absolute -left-[35px] top-0.5 p-1.5 rounded-full border-2 transition-all ${
-                              isCompleted 
-                                ? "bg-stone-900 text-amber-200 border-stone-900" 
-                                : "bg-white text-stone-300 border-stone-200"
-                            }`}>
-                              <IconComponent className="w-3.5 h-3.5" />
-                            </div>
-
-                            {/* Text detail */}
-                            <div className="space-y-0.5 text-left">
-                              <p className={`text-xs font-bold leading-none ${
-                                isCurrent 
-                                  ? "text-stone-950 text-sm font-extrabold" 
-                                  : isCompleted 
-                                  ? "text-stone-900" 
-                                  : "text-stone-400"
-                              }`}>
-                                {step.label}
-                                {isCurrent && (
-                                  <span className="ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-150 uppercase tracking-widest animate-pulse">
-                                    Active
-                                  </span>
-                                )}
-                              </p>
-                              <p className={`text-[10px] ${isCompleted ? "text-stone-600" : "text-stone-400"}`}>
-                                {step.description}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div className="flex justify-between items-center border-b border-stone-100 dark:border-stone-800 pb-3">
+                      <h4 className="font-serif text-sm font-bold text-stone-900 dark:text-stone-100">Shipment Timeline</h4>
+                      <button
+                        onClick={() => setOrderView("status")}
+                        className="text-[10px] uppercase font-mono font-bold text-amber-600 hover:text-amber-700 underline cursor-pointer"
+                      >
+                        ← Back to Summary
+                      </button>
                     </div>
+
+                    {trackedOrder.status === "Cancelled" ? (
+                      <div className="text-rose-800 py-5 text-center space-y-2">
+                        <p className="font-bold text-sm">❌ Order Cancelled</p>
+                        <p className="text-xs">This order has been cancelled and refunded. If you have questions, contact us.</p>
+                      </div>
+                    ) : (
+                      <div className="py-2">
+                        <OrderTracking
+                          steps={STATUS_STEPS.map((step, idx) => {
+                            const isCompleted = idx <= activeStepIdx;
+                            let tsStr = "Pending";
+                            if (isCompleted) {
+                              if (idx === 0) {
+                                tsStr = formatTime(trackedOrder.createdAt);
+                              } else {
+                                const bDate = new Date(trackedOrder.createdAt);
+                                bDate.setHours(bDate.getHours() + idx * 3);
+                                tsStr = bDate.toLocaleString("en-IN", {
+                                  dateStyle: "medium",
+                                  timeStyle: "short",
+                                });
+                              }
+                            }
+                            return {
+                              name: step.label,
+                              timestamp: tsStr,
+                              isCompleted: isCompleted,
+                              description: step.description,
+                            };
+                          })}
+                        />
+                      </div>
+                    )}
                   </div>
+                )}
+
+                {/* Simulated Order Completion Action Block */}
+                {trackedOrder.status !== "Delivered" && trackedOrder.status !== "Cancelled" && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-5 bg-gradient-to-br from-amber-50/50 to-orange-50/20 border border-amber-200/50 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4 text-left"
+                  >
+                    <div className="space-y-1">
+                      <p className="font-serif font-bold text-stone-900 text-sm">Has your Shanti Brew package arrived?</p>
+                      <p className="text-[10px] sm:text-xs text-stone-500 leading-relaxed max-w-sm">
+                        If your gourmet decaf parcel has been delivered to you safely, click "Mark Received & Complete" below to review and enjoy!
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleMarkAsDelivered(trackedOrder.id)}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-mono font-bold rounded-xl active:scale-[0.98] transition-all cursor-pointer shadow-md shadow-emerald-650/10 shrink-0"
+                    >
+                      Receive & Complete Order ☕
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* Post-Delivery Customer Review Request - triggers only when Order is Delivered/Complete */}
+                {trackedOrder.status === "Delivered" && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-6 bg-amber-50/30 rounded-3xl border border-amber-200/40 text-center space-y-4 shadow-3xs"
+                  >
+                    <div className="space-y-1">
+                      <span className="text-[9px] uppercase font-mono tracking-widest text-[#B4942B] font-black block">
+                        AUTHENTIC COFFEE FEEDBACK
+                      </span>
+                      <h4 className="text-base sm:text-lg font-serif font-black text-stone-900">
+                        How was your Shanti Brew Experience?
+                      </h4>
+                      <p className="text-[11px] sm:text-xs text-stone-600 max-w-sm mx-auto">
+                        Your honest feedback feeds our craftsmanship. Let us know how you liked our 100% natural, caffeine-free decaf beans!
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center py-2.5">
+                      <RatingInteraction
+                        onChange={(rating) => handleRatingSubmit(trackedOrder.id, rating)}
+                        className="py-1"
+                      />
+                    </div>
+
+                    {trackedOrder.rating ? (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xs text-emerald-700 font-bold font-mono tracking-wide bg-emerald-50/50 py-1.5 px-3 rounded-full inline-flex items-center gap-1.5 mx-auto"
+                      >
+                        <span>✓ Thank you for rating us {trackedOrder.rating}/5 stars! Enjoy your premium brew.</span>
+                      </motion.div>
+                    ) : (
+                      <p className="text-[10px] text-stone-400 font-mono tracking-wider italic">
+                        Select an emoji above to submit your rating.
+                      </p>
+                    )}
+                  </motion.div>
                 )}
 
                 {/* Delivery Information details - FLAT and borderless */}

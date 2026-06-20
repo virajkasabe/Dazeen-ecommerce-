@@ -1,7 +1,11 @@
+import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ShoppingCart, Sparkles, User, ShieldCheck, Package, Home } from "lucide-react";
+import { ShoppingCart, Sparkles, User, ShieldCheck, Package, Home, FileText, Mail, Compass, HelpCircle, PhoneCall, Coffee } from "lucide-react";
 import { CartItem } from "../types";
+import { LiquidButton } from "./ui/liquid-glass-button";
+import { BottomNavBar } from "./ui/bottom-nav-bar";
+import { MenuToggleIcon } from "./ui/menu-toggle-icon";
 
 interface NavbarProps {
   cart: CartItem[];
@@ -11,8 +15,9 @@ interface NavbarProps {
   currentUser: any;
   isAdmin: boolean;
   onOpenLogin: () => void;
-  currentView: "main" | "login" | "tracking" | "admin" | "cart";
-  onSetView: (v: "main" | "login" | "tracking" | "admin" | "cart") => void;
+  currentView: "main" | "login" | "tracking" | "admin" | "cart" | "terms";
+  onSetView: (v: "main" | "login" | "tracking" | "admin" | "cart" | "terms") => void;
+  onOpenContact?: () => void;
 }
 
 export default function Navbar({
@@ -24,9 +29,11 @@ export default function Navbar({
   isAdmin,
   currentView,
   onSetView,
+  onOpenContact,
 }: NavbarProps) {
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const [menuOpen, setMenuOpen] = useState(false);
   // Cool Auto-Hide & Show-on-Scroll-Stop Animation logic
   const [isNavbarVisible, setIsNavbarVisible] = useState<boolean>(true);
   const scrollTimeoutRef = useRef<any>(null);
@@ -120,123 +127,197 @@ export default function Navbar({
             </nav>
 
             {/* Quick trust metrics on the right side */}
-            <div className="flex items-center gap-2 sm:gap-3 z-50">
+            <div className="flex items-center gap-2 sm:gap-4 z-50">
               <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-stone-800/5 text-stone-600 border border-stone-800/15 shadow-xs uppercase tracking-wider">
                 <Sparkles className="w-3 h-3 text-[#5E0ED7] animate-pulse" />
                 <span>₹ INR Store</span>
               </span>
+              
+              {/* Animated Hamburger Toggle Button */}
+              <button
+                id="hamburger-menu-btn"
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="w-10 h-10 rounded-xl bg-white/80 border border-stone-200 hover:border-stone-400 flex items-center justify-center text-stone-800 hover:text-stone-950 transition-all cursor-pointer shadow-xs active:scale-95"
+                aria-label="Toggle navigation menu"
+              >
+                <MenuToggleIcon open={menuOpen} className="w-5 h-5" duration={400} />
+              </button>
             </div>
 
           </div>
         </div>
       </motion.header>
 
-      {/* Floating Bottom Pill-shaped Navigation Bar - Glassy Pure White Design */}
-      <motion.div
-        initial={{ y: 0, opacity: 1, x: "-50%" }}
-        animate={{ y: isNavbarVisible ? 0 : 120, opacity: isNavbarVisible ? 1 : 0, x: "-50%" }}
-        transition={{ type: "spring", stiffness: 220, damping: 25 }}
-        className="fixed bottom-6 left-1/2 z-50 select-none max-w-[calc(100vw-32px)]"
-      >
-        <div
-          style={{ width: "380px" }}
-          className="bg-white/75 backdrop-blur-xl border border-white/40 shadow-2xl shadow-stone-950/5 rounded-[100px] overflow-hidden p-1.5 max-w-full"
-        >
-          <nav className="flex items-center justify-around">
+      {/* 40% height Sliding Down Navigation Drawer */}
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            {/* Backdrop layer */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMenuOpen(false)}
+              className="fixed inset-0 bg-stone-950/25 z-30 pointer-events-auto backdrop-blur-xs"
+            />
             
-            {/* Home Option */}
-            <button
-              onClick={(e) => {
+            {/* Sliding Panel */}
+            <motion.div
+              id="sliding-hamburger-drawer"
+              initial={{ y: "-100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "-100%" }}
+              transition={{ type: "spring", damping: 26, stiffness: 180 }}
+              className="fixed top-0 left-0 right-0 h-[42vh] min-h-[350px] bg-[#FAF6F0] border-b border-coffee-200/80 shadow-2xl z-40 pt-24 pb-6 px-6 sm:px-12 flex flex-col justify-between overflow-y-auto"
+            >
+              {/* Grid content */}
+              <div className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                {/* Left side column: Primary navigational items */}
+                <div className="space-y-4">
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-[#5E0ED7] uppercase block">
+                    Boutique Menu & Support
+                  </span>
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onSetView("main");
+                        setTimeout(() => onNavigate("blends"), 100);
+                      }}
+                      className="flex items-center gap-2.5 text-stone-800 hover:text-[#5E0ED7] font-serif font-black text-lg tracking-tight text-left transition-colors cursor-pointer"
+                    >
+                      <Coffee className="w-4 h-4 text-[#5E0ED7]" />
+                      Explore Specialty Blends
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onSetView("terms");
+                      }}
+                      className="flex items-center gap-2.5 text-stone-800 hover:text-[#5E0ED7] font-serif font-black text-lg tracking-tight text-left transition-colors cursor-pointer"
+                    >
+                      <FileText className="w-4 h-4 text-emerald-600" />
+                      Terms & Sourcing Specifications
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (onOpenContact) {
+                          onOpenContact();
+                        }
+                      }}
+                      className="flex items-center gap-2.5 text-stone-800 hover:text-[#5E0ED7] font-serif font-black text-lg tracking-tight text-left transition-colors cursor-pointer"
+                    >
+                      <Mail className="w-4 h-4 text-amber-500" />
+                      Contact Us / Live Inquiry Support
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right side column: Brand statements or instant trust factors */}
+                <div className="p-5 bg-white/60 border border-coffee-200/40 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#5E0ED7] animate-pulse" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-stone-500">
+                      Quality Standards
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-serif font-bold text-coffee-950">
+                    100% Sourced Organic Guarantee
+                  </h4>
+                  <p className="text-xs text-stone-600 leading-relaxed">
+                    Our Western Ghats estates shade-grow each coffee berry naturally. Filter processing is fully pure-water purified, with 0% chemical trace residues on test labs.
+                  </p>
+                  <p className="text-[10px] font-mono text-zinc-400">
+                    Pune, MH • Call: +91 98345 00977
+                  </p>
+                </div>
+              </div>
+
+              {/* Minimalist lower edge bar */}
+              <div className="max-w-7xl mx-auto w-full border-t border-coffee-200/50 pt-4 flex justify-between items-center text-[10px] uppercase font-mono tracking-widest text-stone-400">
+                <span>© 2026 Dazeen Specialty Filter Roasters</span>
+                <span className="flex items-center gap-1 text-emerald-600 font-bold">
+                  <Sparkles className="w-3.5 h-3.5" /> Handcrafted Purity
+                </span>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Bottom Pill-shaped Navigation Bar - Glassy Expandable Design */}
+      {isNavbarVisible && (
+        <BottomNavBar
+          items={[
+            {
+              name: "Home",
+              icon: Home,
+              onClick: (e) => {
                 e.stopPropagation();
                 onSetView("main");
                 onNavigate("hero");
-              }}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer ${
-                currentView === "main"
-                  ? "bg-white text-stone-950 font-extrabold shadow-sm"
-                  : "text-stone-500 hover:text-stone-900"
-              }`}
-            >
-              <Home className="w-4 h-4 text-inherit" />
-              <span className="text-[9px] font-mono uppercase tracking-wider font-bold">Home</span>
-            </button>
-            
-            {/* Order Option */}
-            <button
-              onClick={(e) => {
+              },
+            },
+            {
+              name: "Order",
+              icon: Package,
+              onClick: (e) => {
                 e.stopPropagation();
                 onSetView("tracking");
-              }}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer ${
-                currentView === "tracking"
-                  ? "bg-white text-stone-950 font-extrabold shadow-sm"
-                  : "text-stone-500 hover:text-stone-900"
-              }`}
-            >
-              <Package className="w-4 h-4 text-inherit" />
-              <span className="text-[9px] font-mono uppercase tracking-wider font-bold">Order</span>
-            </button>
-
-            {/* Cart Option */}
-            <button
-              onClick={(e) => {
+              },
+            },
+            {
+              name: "Cart",
+              icon: ShoppingCart,
+              onClick: (e) => {
                 e.stopPropagation();
                 onSetView("cart");
-              }}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer relative ${
-                currentView === "cart"
-                  ? "bg-white text-stone-950 font-extrabold shadow-sm"
-                  : "text-stone-500 hover:text-stone-900"
-              }`}
-            >
-              <ShoppingCart className="w-4 h-4 text-inherit" />
-              <span className="text-[9px] font-mono uppercase tracking-wider font-bold">Cart</span>
-              {totalItems > 0 && (
-                <span className="absolute top-0.5 right-3 bg-red-500 text-white text-[8px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center font-mono ring-1 ring-white">
+              },
+              badge: totalItems > 0 ? (
+                <span className="absolute -top-1.5 -right-2 bg-amber-400 text-stone-950 text-[8px] font-black h-4 w-4 rounded-full flex items-center justify-center font-mono ring-1 ring-white leading-none shadow-sm">
                   {totalItems}
                 </span>
-              )}
-            </button>
-
-            {/* Profile Option */}
-            <button
-              onClick={(e) => {
+              ) : null,
+            },
+            {
+              name: currentUser ? currentUser.displayName?.split(" ")[0] || "Profile" : "Profile",
+              icon: User,
+              onClick: (e) => {
                 e.stopPropagation();
                 onSetView("login");
-              }}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer ${
-                currentView === "login"
-                  ? "bg-white text-stone-950 font-extrabold shadow-sm"
-                  : "text-stone-500 hover:text-stone-900"
-              }`}
-            >
-              <User className="w-4 h-4 text-inherit" />
-              <span className="text-[9px] font-mono uppercase tracking-wider font-bold max-w-[60px] truncate block">
-                {currentUser ? currentUser.displayName?.split(" ")[0] || "Profile" : "Profile"}
-              </span>
-            </button>
-
-            {/* Admin Console (Only visible if isAdmin is true) */}
-            {isAdmin && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSetView("admin");
-                }}
-                className={`flex-1 flex flex-col items-center justify-center gap-1 py-1 rounded-full transition-all cursor-pointer ${
-                  currentView === "admin"
-                    ? "bg-amber-400 text-stone-950 font-extrabold shadow-sm"
-                    : "text-stone-500 hover:text-stone-900 font-extrabold"
-                }`}
-              >
-                <ShieldCheck className="w-4 h-4 text-inherit" />
-                <span className="text-[9px] font-mono uppercase tracking-wider font-bold">Admin</span>
-              </button>
-            )}
-
-          </nav>
-        </div>
-      </motion.div>
+              },
+            },
+            ...(isAdmin
+              ? [
+                  {
+                    name: "Admin",
+                    icon: ShieldCheck,
+                    onClick: (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      onSetView("admin");
+                    },
+                  },
+                ]
+              : []),
+          ]}
+          activeTab={
+            currentView === "main"
+              ? "Home"
+              : currentView === "tracking"
+              ? "Order"
+              : currentView === "cart"
+              ? "Cart"
+              : currentView === "login"
+              ? (currentUser ? currentUser.displayName?.split(" ")[0] || "Profile" : "Profile")
+              : currentView === "admin"
+              ? "Admin"
+              : "Home"
+          }
+        />
+      )}
     </>
   );
 }

@@ -2,7 +2,12 @@ import { useState, FormEvent, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Coffee, ShieldCheck, Mail, Lock, LogOut, ArrowRight, ArrowLeft, Phone, User, KeyRound, ArrowUpRight } from "lucide-react";
 import Hls from "hls.js";
+import { SmokeyBackground } from "./ui/login-form";
 import { notificationService } from "../utils/notifications";
+import { LiquidButton } from "./ui/liquid-glass-button";
+import { SlideButton } from "./ui/slide-button";
+import { Checkbox } from "./ui/checkbox";
+import { Label } from "./ui/label";
 
 interface LoginPageProps {
   onBackToHome: () => void;
@@ -59,6 +64,7 @@ export default function LoginPage({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   // Profile Editable Fields
   const [profileName, setProfileName] = useState("");
@@ -255,6 +261,10 @@ export default function LoginPage({
         setError("Please enter your name, email, and a secure password.");
         return;
       }
+      if (!agreeToTerms) {
+        setError("Please accept the Terms of Service and Privacy Policy to create your account.");
+        return;
+      }
       setLoading(true);
 
       setTimeout(() => {
@@ -319,7 +329,7 @@ export default function LoginPage({
   };
 
   // Handle Phone auth code request
-  const handleSendOtp = (e: FormEvent) => {
+  const handleSendOtp = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
@@ -330,16 +340,32 @@ export default function LoginPage({
     }
 
     setLoading(true);
-    setTimeout(() => {
-      const code = Math.floor(1000 + Math.random() * 9000).toString();
-      setGeneratedOtp(code);
-      setOtpSent(true);
+    const code = Math.floor(1020 + Math.random() * 8900).toString(); // Secure 4-digit code
+
+    try {
+      const response = await fetch("/api/sms/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, otp: code }),
+      });
+
+      const serverResult = await response.json();
+
+      if (serverResult.success === true) {
+        setGeneratedOtp(code);
+        setOtpSent(true);
+        setOtp("");
+        setSuccessMsg(`OTP verified and sent successfully via Fast2SMS gateway to +91-${phone}.`);
+      } else {
+        // Explicitly show error on screen and do not bypass to simulated mode
+        setError(`Fast2SMS Gateway Error: ${serverResult.error || "Failed to transmit OTP."}`);
+      }
+    } catch (err: any) {
+      console.warn("Connection issue during OTP dispatch", err);
+      setError(`SMS Network Error: ${err?.message || "Failed to establish a connection with local API server."}`);
+    } finally {
       setLoading(false);
-      
-      // Auto fill or show on screen nicely to satisfy offline sandbox
-      setOtp("");
-      setSuccessMsg(`SMS Code sent. Enter simulated code: ${code}`);
-    }, 600);
+    }
   };
 
   // Handle Phone Verify OTP
@@ -412,53 +438,78 @@ export default function LoginPage({
   }, []);
 
   return (
-    <div className="bg-black text-[#FAF6F0] min-h-screen pt-12">
-      
-      {/* Centered Login Card */}
-      <div className="max-w-md mx-auto my-12 px-4 py-8 bg-white border border-coffee-200/60 rounded-3xl shadow-xl shadow-coffee-950/5 relative overflow-hidden text-coffee-900">
-      
-      {/* Background Ambience */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-accent-gold/5 rounded-full blur-2xl pointer-events-none" />
-      <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-coffee-100/50 rounded-full blur-xl pointer-events-none" />
+    <div className="relative min-h-screen bg-[#070604] text-[#FAF6F0] overflow-hidden">
+      {/* Interactive WebGL smoke background for non-logged-in views */}
+      {!currentUser && (
+        <SmokeyBackground backdropBlurAmount="md" className="absolute inset-0 z-0" color="#B4942B" />
+      )}
 
-      <motion.div 
-        className="text-center space-y-6 relative z-10"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
+      {/* Main container content */}
+      <div className="relative z-10 flex flex-col justify-start min-h-screen pt-12">
         
-        {/* Brand Icon */}
-        <div className="mx-auto w-16 h-16 bg-coffee-950 text-accent-amber rounded-2xl flex items-center justify-center shadow-lg">
-          <Coffee className="w-8 h-8 animate-pulse" />
-        </div>
+        {/* Centered Card */}
+        <div className={`max-w-md w-full mx-auto my-12 px-6 py-8 rounded-3xl shadow-2xl relative overflow-hidden ${
+          currentUser 
+            ? "bg-white border border-coffee-200/60 text-coffee-900" 
+            : "bg-stone-950/40 backdrop-blur-xl border border-white/10 text-white"
+        }`}>
 
-        <div className="space-y-1.5">
-          <h2 className="text-2xl font-serif font-bold text-coffee-950">
-            {currentUser ? `Welcome back, ${currentUser.displayName}` : "Enter Dazeen Hub"}
-          </h2>
-          <p className="text-xs text-coffee-600 max-w-xs mx-auto">
-            {currentUser 
-              ? "Track your direct coffee shipments, change custom grinds, or administer global accounts." 
-              : "Access your customizable coffee profile, trace order shipments, or seed master inventory configs."}
-          </p>
-        </div>
+          {currentUser ? (
+            /* Background Ambience for profile */
+            <>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-accent-gold/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-coffee-100/50 rounded-full blur-xl pointer-events-none" />
+            </>
+          ) : null}
 
-        {/* Global Notifications */}
-        {error && (
-          <div className="p-3.5 bg-rose-50 border border-rose-250 text-rose-800 text-xs rounded-xl font-medium text-left">
-            ⚠️ {error}
-          </div>
-        )}
+          <motion.div 
+            className="text-center space-y-6 relative z-10"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            
+            {/* Brand Icon */}
+            <div className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+              currentUser ? "bg-coffee-950 text-accent-amber" : "bg-stone-900/40 border border-white/10 text-amber-400"
+            }`}>
+              <Coffee className="w-8 h-8 animate-pulse" />
+            </div>
 
-        {successMsg && (
-          <div className="p-3.5 bg-emerald-50 border border-emerald-250 text-emerald-800 text-xs rounded-xl font-mono text-left">
-            ✨ {successMsg}
-          </div>
-        )}
+            <div className="space-y-1.5">
+              <h2 className={`text-2xl font-serif font-bold ${currentUser ? "text-coffee-950" : "text-white"}`}>
+                {currentUser ? `Welcome back, ${currentUser.displayName}` : "Enter Dazeen Hub"}
+              </h2>
+              <p className={`text-xs max-w-xs mx-auto ${currentUser ? "text-coffee-600" : "text-stone-300"}`}>
+                {currentUser 
+                  ? "Track your direct coffee shipments, change custom grinds, or administer global accounts." 
+                  : "Access your customizable coffee profile, trace order shipments, or seed master inventory configs."}
+              </p>
+            </div>
 
-        {currentUser ? (
+            {/* Global Notifications */}
+            {error && (
+              <div className={`p-3.5 border text-xs rounded-xl font-medium text-left ${
+                currentUser 
+                  ? "bg-rose-50 border-rose-200 text-rose-800" 
+                  : "bg-rose-950/50 border-rose-800/80 text-rose-200"
+              }`}>
+                ⚠️ {error}
+              </div>
+            )}
+
+            {successMsg && (
+              <div className={`p-3.5 border text-xs rounded-xl font-mono text-left ${
+                currentUser 
+                  ? "bg-emerald-50 border-emerald-250 text-emerald-800"
+                  : "bg-emerald-950/50 border-emerald-800/85 text-emerald-200"
+              }`}>
+                ✨ {successMsg}
+              </div>
+            )}
+
+            {currentUser ? (
           /* LOGGED IN VIEW - SPECIFICALLY CUSTOMIZED BY USER REQUEST */
           <div className="space-y-6 pt-2 text-stone-900 bg-white">
             
@@ -654,45 +705,10 @@ export default function LoginPage({
                 Security Gesture (Swipe to Logout)
               </span>
               
-              <div 
-                ref={sliderContainerRef}
-                className="relative w-full h-14 bg-stone-100/30 backdrop-blur-xl rounded-2xl border border-stone-200/50 overflow-hidden flex items-center p-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)] select-none"
-              >
-                {/* Visual indicator slider tracking fill with premium golden glass aura */}
-                <div className="absolute inset-y-1 left-1 bg-gradient-to-r from-stone-200/30 to-[#B4942B]/10 rounded-xl pointer-events-none" style={{ width: "42px" }}></div>
-                
-                {/* Centered assistance prompt */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-                  <span className="text-[9px] font-mono tracking-widest uppercase font-black text-stone-500/80">
-                    Slide fully to end to Logout →
-                  </span>
-                </div>
-
-                <motion.div
-                  drag="x"
-                  dragConstraints={{ left: 0, right: maxDragDistance }}
-                  dragElastic={0}
-                  dragMomentum={false}
-                  animate={{ x: 0 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 26 }}
-                  onDragEnd={(event, info) => {
-                    // Must pull completely to the dynamic end of track
-                    if (info.offset.x >= maxDragDistance - 10) {
-                      handleSignOut();
-                    }
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  whileDrag={{ scale: 1.05, backgroundColor: "#e11d48" }}
-                  className="w-12 h-12 bg-stone-900 text-white rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing z-10 shadow-md shadow-stone-900/10 transition-colors"
-                  title="Swipe to log out"
-                >
-                  <LogOut className="w-4 h-4 rotate-180 text-white" />
-                </motion.div>
-                
-                <span className="absolute right-4 text-[9px] text-[#B4942B] font-black font-mono tracking-widest select-none pointer-events-none">
-                  EXIT
-                </span>
-              </div>
+              <SlideButton 
+                labelText="Slide fully to end to Logout →"
+                onDragComplete={handleSignOut}
+              />
             </div>
 
             {/* Home Navigation button */}
@@ -707,26 +723,28 @@ export default function LoginPage({
           </div>
         ) : (
           /* BRAND NEW FORMS (NO BYPASS BUTTONS!) */
-          <div className="space-y-5 pt-2">
+          <div className="space-y-6 pt-2">
             
             {/* Custom Interactive Sign In Dual-Tabs */}
-            <div className="flex bg-[#FAF6F0] p-1 rounded-xl border border-coffee-150">
+            <div className="flex bg-stone-900/60 p-1 rounded-xl border border-stone-800/80">
               <button
+                type="button"
                 onClick={() => switchTab("email")}
-                className={`flex-1 py-2 text-[11px] font-mono font-bold uppercase tracking-wider rounded-lg transition-transform ${
+                className={`flex-1 py-2 text-[11px] font-mono font-bold uppercase tracking-wider rounded-lg transition-transform cursor-pointer ${
                   activeTab === "email" 
-                    ? "bg-coffee-900 text-white shadow-sm" 
-                    : "text-coffee-600 hover:text-coffee-950"
+                    ? "bg-amber-500 text-stone-950 shadow-sm font-black" 
+                    : "text-stone-400 hover:text-white"
                 }`}
               >
                 📬 Email Account
               </button>
               <button
+                type="button"
                 onClick={() => switchTab("phone")}
-                className={`flex-1 py-2 text-[11px] font-mono font-bold uppercase tracking-wider rounded-lg transition-transform ${
+                className={`flex-1 py-2 text-[11px] font-mono font-bold uppercase tracking-wider rounded-lg transition-transform cursor-pointer ${
                   activeTab === "phone" 
-                    ? "bg-coffee-900 text-white shadow-sm" 
-                    : "text-coffee-600 hover:text-coffee-950"
+                    ? "bg-amber-500 text-stone-950 shadow-sm font-black" 
+                    : "text-stone-400 hover:text-white"
                 }`}
               >
                 📱 Mobile Number
@@ -735,58 +753,64 @@ export default function LoginPage({
 
             {/* tab rendering */}
             {activeTab === "email" ? (
-              <form onSubmit={handleEmailAuthSubmit} className="space-y-4 text-left">
+              <form onSubmit={handleEmailAuthSubmit} className="space-y-6 text-left">
                 {authMode === "signup" && (
-                  <div>
-                    <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-coffee-700 mb-1">
+                  <div className="relative z-0 w-full mb-6 group">
+                    <input
+                      type="text"
+                      id="floating_name"
+                      required
+                      placeholder=" "
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="block py-2.5 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-stone-700 appearance-none focus:outline-none focus:ring-0 focus:border-amber-400 peer transition-all font-semibold"
+                    />
+                    <label
+                      htmlFor="floating_name"
+                      className="absolute text-sm text-stone-300 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-amber-400 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 flex items-center"
+                    >
+                      <User className="inline-block mr-2 w-4 h-4" />
                       Full Name
                     </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-2.5 w-4 h-4 text-coffee-400" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Rahul Kumar"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2.5 border border-coffee-200 rounded-xl text-sm focus:outline-none focus:border-coffee-500 transition-colors bg-[#FAF6F0]"
-                      />
-                    </div>
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-coffee-700 mb-1">
+                <div className="relative z-0 w-full mb-6 group">
+                  <input
+                    type="email"
+                    id="floating_email"
+                    required
+                    placeholder=" "
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="block py-2.5 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-stone-700 appearance-none focus:outline-none focus:ring-0 focus:border-amber-400 peer transition-all font-semibold"
+                  />
+                  <label
+                    htmlFor="floating_email"
+                    className="absolute text-sm text-stone-300 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-amber-400 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 flex items-center"
+                  >
+                    <Mail className="inline-block mr-2 w-4 h-4" />
                     Email Address
                   </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 w-4 h-4 text-coffee-400" />
-                    <input
-                      type="email"
-                      required
-                      placeholder={authMode === "signup" ? "yourname@dazeen.com" : "shreedeshmukh166@gmail.com"}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 border border-coffee-200 rounded-xl text-sm focus:outline-none focus:border-coffee-500 transition-colors bg-[#FAF6F0]"
-                    />
-                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-coffee-700 mb-1">
+                <div className="relative z-0 w-full mb-6 group">
+                  <input
+                    type="password"
+                    id="floating_password"
+                    required
+                    placeholder=" "
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block py-2.5 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-stone-700 appearance-none focus:outline-none focus:ring-0 focus:border-amber-400 peer transition-all font-semibold"
+                  />
+                  <label
+                    htmlFor="floating_password"
+                    className="absolute text-sm text-stone-300 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-amber-400 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 flex items-center"
+                  >
+                    <Lock className="inline-block mr-2 w-4 h-4" />
                     Password
                   </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-2.5 w-4 h-4 text-coffee-400" />
-                    <input
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 border border-coffee-200 rounded-xl text-sm focus:outline-none focus:border-coffee-500 transition-colors bg-[#FAF6F0]"
-                    />
-                  </div>
                 </div>
 
                 {/* Switcher details */}
@@ -798,71 +822,93 @@ export default function LoginPage({
                       setError(null);
                       setSuccessMsg(null);
                     }}
-                    className="text-accent-darkgold hover:underline font-semibold font-mono"
+                    className="text-amber-400 hover:underline font-semibold font-mono cursor-pointer"
                   >
                     {authMode === "signin" ? "New customer? Register Account" : "Already registered? Sign In"}
                   </button>
                 </div>
 
+                {authMode === "signup" && (
+                  <div className="flex items-start space-x-3 bg-stone-900/50 p-3.5 rounded-2xl border border-white/5 select-none my-1" id="register-terms-container">
+                    <Checkbox
+                      id="terms"
+                      checked={agreeToTerms}
+                      onCheckedChange={(checked) => setAgreeToTerms(checked === true)}
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <Label
+                        htmlFor="terms"
+                        className="text-[11px] text-stone-300 font-sans cursor-pointer hover:text-stone-100 select-none leading-relaxed"
+                      >
+                        I accept and agree to the <span className="text-amber-400 font-bold underline decoration-amber-400/30">Terms of Service</span> and <span className="text-amber-400 font-bold underline decoration-amber-400/30">Privacy Policy</span> of Dazeen Premium Coffee.
+                      </Label>
+                    </div>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-coffee-900 border border-coffee-950 text-white font-bold rounded-xl text-xs font-mono uppercase tracking-wider transition-all hover:bg-coffee-800 hover:shadow-md cursor-pointer flex items-center justify-center gap-2"
+                  className="group w-full flex items-center justify-center py-3.5 px-4 bg-amber-500 hover:bg-amber-600 rounded-xl text-stone-950 font-extrabold uppercase tracking-widest text-xs font-mono focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-stone-950 focus:ring-amber-400 transition-all duration-300 cursor-pointer disabled:opacity-50"
                 >
                   {loading ? "Verifying Credentials..." : authMode === "signin" ? "Login Account" : "Complete Register"}
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
                 </button>
               </form>
             ) : (
               /* PHONE TAB FLOW */
-              <div className="space-y-4 text-left">
+              <div className="space-y-6 text-left">
                 {!otpSent ? (
-                  <form onSubmit={handleSendOtp} className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-coffee-700 mb-1">
+                  <form onSubmit={handleSendOtp} className="space-y-6">
+                    <div className="relative z-0 w-full mb-6 group">
+                      <input
+                        type="tel"
+                        id="floating_phone"
+                        required
+                        maxLength={10}
+                        placeholder=" "
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                        className="block py-2.5 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-stone-700 appearance-none focus:outline-none focus:ring-0 focus:border-amber-400 peer transition-all font-semibold font-mono tracking-wider"
+                      />
+                      <label
+                        htmlFor="floating_phone"
+                        className="absolute text-sm text-stone-300 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-amber-400 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 flex items-center"
+                      >
+                        <Phone className="inline-block mr-2 w-4 h-4" />
                         10-Digit Mobile Number
                       </label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-2.5 w-4 h-4 text-coffee-400" />
-                        <input
-                          type="tel"
-                          required
-                          maxLength={10}
-                          placeholder="9876543210"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                          className="w-full pl-9 pr-4 py-2.5 border border-coffee-200 rounded-xl text-sm focus:outline-none focus:border-coffee-500 transition-colors bg-[#FAF6F0]"
-                        />
-                      </div>
                     </div>
 
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-4 bg-coffee-900 border border-coffee-950 text-white font-bold rounded-xl text-xs font-mono uppercase tracking-wider transition-all hover:bg-coffee-800 cursor-pointer flex items-center justify-center gap-2"
+                      className="group w-full flex items-center justify-center py-3.5 px-4 bg-amber-500 hover:bg-amber-600 rounded-xl text-stone-950 font-extrabold uppercase tracking-widest text-xs font-mono focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-stone-950 focus:ring-amber-400 transition-all duration-300 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? "Generating SMS..." : "Request OTP Code"}
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
                     </button>
                   </form>
                 ) : (
-                  <form onSubmit={handleVerifyOtp} className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-bold font-mono uppercase tracking-wider text-coffee-700 mb-1">
-                        4-Digit verification code
+                  <form onSubmit={handleVerifyOtp} className="space-y-6">
+                    <div className="relative z-0 w-full mb-6 group">
+                      <input
+                        type="text"
+                        id="floating_otp"
+                        required
+                        maxLength={4}
+                        placeholder=" "
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                        className="block py-2.5 px-0 w-full text-lg text-amber-300 bg-transparent border-0 border-b-2 border-stone-700 appearance-none focus:outline-none focus:ring-0 focus:border-amber-400 peer transition-all text-center font-mono tracking-widest"
+                      />
+                      <label
+                        htmlFor="floating_otp"
+                        className="absolute text-sm text-stone-300 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-amber-400 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 flex items-center w-full justify-center"
+                      >
+                        <KeyRound className="inline-block mr-2 w-4 h-4" />
+                        4-Digit Verification Code
                       </label>
-                      <div className="relative">
-                        <KeyRound className="absolute left-3 top-2.5 w-4 h-4 text-coffee-400" />
-                        <input
-                          type="text"
-                          required
-                          maxLength={4}
-                          placeholder="Enter 4 digit code"
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                          className="w-full pl-9 pr-4 py-2.5 border border-coffee-200 rounded-xl text-sm focus:outline-none focus:border-coffee-500 transition-colors bg-[#FAF6F0] font-mono tracking-widest text-center text-lg"
-                        />
-                      </div>
                     </div>
 
                     <div className="flex justify-between items-center text-[11px] pt-1 font-mono">
@@ -874,7 +920,7 @@ export default function LoginPage({
                           setError(null);
                           setSuccessMsg(null);
                         }}
-                        className="text-coffee-500 hover:text-coffee-950 hover:underline"
+                        className="text-stone-400 hover:text-white hover:underline cursor-pointer"
                       >
                         ← Back to mobile entry
                       </button>
@@ -883,52 +929,85 @@ export default function LoginPage({
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full py-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
+                      className="group w-full flex items-center justify-center py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold uppercase tracking-widest text-xs font-mono focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-stone-950 focus:ring-emerald-500 transition-all duration-300 cursor-pointer disabled:opacity-50"
                     >
                       {loading ? "Verifying Code..." : "Verify Mobile OTP"}
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
                     </button>
                   </form>
                 )}
               </div>
             )}
 
+            {/* Divider */}
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-stone-850"></div>
+              <span className="flex-shrink mx-4 text-stone-400 text-[10px] font-mono tracking-widest uppercase">OR CONTINUE WITH</span>
+              <div className="flex-grow border-t border-stone-850"></div>
+            </div>
+
+            {/* Google Authentication Button */}
+            <button
+              type="button"
+              onClick={() => {
+                // Instantly login as Shree Deshmukh
+                const googlePayload = {
+                  uid: "google-shree-admin",
+                  email: "shreedeshmukh166@gmail.com",
+                  displayName: "Shree Deshmukh",
+                  photoURL: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150",
+                  phoneNumber: "9876543210"
+                };
+                localStorage.setItem("dazeen_current_user", JSON.stringify(googlePayload));
+                localStorage.setItem("dazeen_user_is_admin", JSON.stringify(true));
+                onLoginSuccess(googlePayload, true);
+                notificationService.send("Secure Google login successful! ☕", "Welcome back, Shree Deshmukh!");
+              }}
+              className="w-full flex items-center justify-center py-3 px-4 bg-white hover:bg-white/95 rounded-xl text-stone-950 font-bold font-mono tracking-wide text-xs transition-all duration-300 cursor-pointer shadow-lg active:scale-98"
+            >
+              <svg className="w-4 h-4 mr-2.5" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039L38.802 8.841C34.553 4.806 29.613 2.5 24 2.5C11.983 2.5 2.5 11.983 2.5 24s9.483 21.5 21.5 21.5S45.5 36.017 45.5 24c0-1.538-.135-3.022-.389-4.417z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12.5 24 12.5c3.059 0 5.842 1.154 7.961 3.039l5.839-5.841C34.553 4.806 29.613 2.5 24 2.5C16.318 2.5 9.642 6.723 6.306 14.691z"></path><path fill="#4CAF50" d="M24 45.5c5.613 0 10.553-2.306 14.802-6.341l-5.839-5.841C30.842 35.846 27.059 38 24 38c-5.039 0-9.345-2.608-11.124-6.481l-6.571 4.819C9.642 41.277 16.318 45.5 24 45.5z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l5.839 5.841C44.196 35.123 45.5 29.837 45.5 24c0-1.538-.135-3.022-.389-4.417z"></path>
+              </svg>
+              Sign In with Google
+            </button>
+
             <div className="pt-2 text-center">
               <button
                 type="button"
                 onClick={onBackToHome}
-                className="text-xs text-accent-darkgold hover:underline font-semibold font-mono inline-flex items-center gap-1"
+                className="text-xs text-amber-400 hover:underline font-semibold font-mono inline-flex items-center gap-1.5 cursor-pointer"
               >
-                <ArrowLeft className="w-3 h-3" /> Save Session & Back to Shop
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to Sourcing Shop
               </button>
             </div>
           </div>
         )}
 
         {/* Benefits Cards Grid */}
-        <div className="mt-8 pt-6 border-t border-coffee-100 grid grid-cols-2 gap-3 text-left">
+        <div className={`mt-8 pt-6 border-t grid grid-cols-2 gap-3 text-left ${currentUser ? "border-coffee-100" : "border-white/10"}`}>
           <div className="flex gap-2 items-start opacity-85">
-            <div className="p-1 rounded-md bg-[#FAF6F0] text-coffee-800">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <div className={`p-1 rounded-md ${currentUser ? "bg-[#FAF6F0] text-coffee-800" : "bg-stone-900/50 text-[#FAF6F0]"}`}>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
             </div>
             <div>
-              <h4 className="text-[11px] font-bold text-coffee-900 leading-tight">Secure Customer Checkouts</h4>
-              <p className="text-[9px] text-coffee-500">Industry standard safety for orders.</p>
+              <h4 className={`text-[11px] font-bold leading-tight ${currentUser ? "text-coffee-900" : "text-stone-200"}`}>Secure Customer Checkouts</h4>
+              <p className={`text-[9px] ${currentUser ? "text-coffee-500" : "text-stone-400"}`}>Industry standard safety for orders.</p>
             </div>
           </div>
           <div className="flex gap-2 items-start opacity-85">
-            <div className="p-1 rounded-md bg-[#FAF6F0] text-coffee-800">
-              <Lock className="w-3.5 h-3.5 text-accent-darkgold" />
+            <div className={`p-1 rounded-md ${currentUser ? "bg-[#FAF6F0] text-[#B4942B]" : "bg-stone-900/50 text-amber-400"}`}>
+              <Lock className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h4 className="text-[11px] font-bold text-coffee-900 leading-tight">Encrypted Device Vault</h4>
-              <p className="text-[9px] text-coffee-500">Standalone client session storage.</p>
+              <h4 className={`text-[11px] font-bold leading-tight ${currentUser ? "text-coffee-900" : "text-stone-200"}`}>Encrypted Device Vault</h4>
+              <p className={`text-[9px] ${currentUser ? "text-coffee-500" : "text-stone-400"}`}>Standalone client session storage.</p>
             </div>
           </div>
         </div>
 
       </motion.div>
     </div>
+  </div>
 
     {/* Cinematic Full-Width CTA + Footer Section */}
     <section className="relative py-32 px-6 md:px-16 lg:px-24 text-center overflow-hidden bg-black text-white flex flex-col justify-center min-h-[600px] mt-16">
@@ -976,13 +1055,13 @@ export default function LoginPage({
           transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
           className="flex items-center justify-center gap-6"
         >
-          <button 
+          <LiquidButton 
             onClick={onBackToHome}
-            className="liquid-glass-strong rounded-full px-6 py-3 text-sm font-medium text-white flex items-center gap-2 hover:bg-white/10 transition-all font-body cursor-pointer"
+            className="rounded-full px-6 py-3 font-body text-white"
           >
             Order Premium Coffee
             <ArrowUpRight className="h-5 w-5" />
-          </button>
+          </LiquidButton>
           <button 
             onClick={onBackToHome}
             className="bg-white text-black rounded-full px-6 py-3 text-sm font-medium flex items-center gap-2 hover:bg-white/90 transition-colors font-body cursor-pointer"

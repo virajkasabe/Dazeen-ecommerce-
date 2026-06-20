@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 
 interface FooterProps {
   onNavigate?: (sectionId: string) => void;
+  onSetView?: (view: string) => void;
 }
 
 // Component 1: LogoIcon
@@ -18,7 +19,7 @@ function LogoIcon() {
 }
 
 // Component 2: FooterCard
-function FooterCard({ onNavigate }: FooterProps) {
+function FooterCard({ onNavigate, onSetView }: FooterProps) {
   const socialIcons = [
     { icon: Linkedin, url: "https://linkedin.com" },
     { icon: Twitter, url: "https://twitter.com" },
@@ -157,9 +158,19 @@ function FooterCard({ onNavigate }: FooterProps) {
         <div className="px-6 sm:px-12 md:px-16 lg:px-20 py-5 flex flex-col md:flex-row justify-between items-center gap-6 text-[15px]">
           <p className="text-[#64748B] font-medium">© 2026 Dazeen. All rights reserved.</p>
           <div className="flex flex-row gap-8 text-[#64748B] font-medium items-center">
-            <a href="#privacy" className="hover:text-[#1E293B] transition-colors">Legal Center</a>
+            <button 
+              onClick={() => onSetView?.("terms")} 
+              className="hover:text-[#1E293B] transition-colors cursor-pointer"
+            >
+              Legal Center
+            </button>
             <div className="w-[1px] h-4 bg-slate-300" />
-            <a href="#terms" className="hover:text-[#1E293B] transition-colors">User Agreement</a>
+            <button 
+              onClick={() => onSetView?.("terms")} 
+              className="hover:text-[#1E293B] transition-colors cursor-pointer"
+            >
+              User Agreement
+            </button>
           </div>
         </div>
       </div>
@@ -212,10 +223,10 @@ function GlassText() {
 }
 
 // Final Default Export
-export default function Footer({ onNavigate }: FooterProps) {
+export default function Footer({ onNavigate, onSetView }: FooterProps) {
   return (
     <footer className="w-full flex flex-col items-center gap-0 pt-16 bg-[#F9F9FB]" id="dazeen_vize_footer">
-      <FooterCard onNavigate={onNavigate} />
+      <FooterCard onNavigate={onNavigate} onSetView={onSetView} />
       <GlassText />
     </footer>
   );

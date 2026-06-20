@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Play, Pause, RotateCcw, Flame, CupSoda, GlassWater, Snowflake, Sparkles, CheckCircle2 } from "lucide-react";
 import { BREW_GUIDES } from "../data";
 import { BrewGuide } from "../types";
+import CounterLoading from "./ui/counter-loader";
 
 export default function BrewSimulator() {
   const [selectedGuideId, setSelectedGuideId] = useState<string>("guide-south-filter");
@@ -33,9 +34,7 @@ export default function BrewSimulator() {
   // Reset timer whenever guide changes
   useEffect(() => {
     stopTimer();
-    // Use slightly accelerated time for quick demo purposes so the user does not wait 10 minutes
-    // But represent standard brew times symbolically
-    const demoSec = guide.id === "guide-cold-brew" ? 30 : Math.ceil(guide.timeSeconds / 15);
+    const demoSec = 10;
     setSecondsLeft(demoSec);
     setTotalSeconds(demoSec);
     setActiveStep(0);
@@ -72,7 +71,7 @@ export default function BrewSimulator() {
   
   const resetTimer = () => {
     stopTimer();
-    const demoSec = guide.id === "guide-cold-brew" ? 30 : Math.ceil(guide.timeSeconds / 15);
+    const demoSec = 10;
     setSecondsLeft(demoSec);
     setTotalSeconds(demoSec);
     setActiveStep(0);
@@ -252,17 +251,30 @@ export default function BrewSimulator() {
 
               {/* Timer Controls */}
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="text-center md:text-left">
-                  <p className="text-[10px] uppercase tracking-widest font-mono text-coffee-500 font-bold">
-                    Extraction Timer
-                  </p>
-                  <p className="text-3xl font-mono font-bold text-coffee-950">
-                    {Math.floor(secondsLeft / 60)}:
-                    {(secondsLeft % 60).toString().padStart(2, "0")}
-                    <span className="text-xs text-coffee-500 font-sans font-normal ml-1">
-                      (Symbolic speed)
-                    </span>
-                  </p>
+                <div className="flex items-center gap-5">
+                  <div className="text-center md:text-left">
+                    <p className="text-[10px] uppercase tracking-widest font-mono text-coffee-500 font-bold">
+                      Extraction Timer
+                    </p>
+                    <p className="text-3xl font-mono font-bold text-coffee-950">
+                      {Math.floor(secondsLeft / 60)}:
+                      {(secondsLeft % 60).toString().padStart(2, "0")}
+                      <span className="text-xs text-coffee-500 font-sans font-normal ml-1">
+                        (10s Step Loop)
+                      </span>
+                    </p>
+                  </div>
+
+                  {/* High-fidelity 15-Grid Counter Loader */}
+                  {timerRunning && (
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="pl-5 border-l border-coffee-200"
+                    >
+                      <CounterLoading color="#d97706" height="3.5rem" className="w-[85px]" />
+                    </motion.div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">

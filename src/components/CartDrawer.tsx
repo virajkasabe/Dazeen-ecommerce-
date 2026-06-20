@@ -2,6 +2,8 @@ import { useState, useMemo, FormEvent, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Trash2, Plus, Minus, Ticket, CreditCard, Sparkles, MapPin, Truck, Check, Smartphone } from "lucide-react";
 import { CartItem } from "../types";
+import { SlideButton } from "./ui/slide-button";
+import { notificationService } from "../utils/notifications";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -636,21 +638,33 @@ export default function CartDrawer({
                       </div>
                     </div>
 
-                    {/* Submit checkout buttons */}
-                    <button
-                      type="submit"
-                      disabled={isProcessingPay}
-                      className="w-full py-4 bg-coffee-900 hover:bg-coffee-850 text-coffee-50 font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 uppercase tracking-wider font-mono cursor-pointer disabled:opacity-50"
-                    >
-                      {isProcessingPay ? (
-                        <>
-                          <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Verifying Secure Gateways...</span>
-                        </>
-                      ) : (
-                        `Place Safe Order (₹${totals.finalAmount})`
-                      )}
-                    </button>
+                     {/* Submit checkout buttons via Slider */}
+                     <div className="pt-2">
+                       <span className="block text-[10px] font-extrabold font-mono uppercase tracking-wider text-stone-500 mb-2 text-left">
+                         Secure Slider (Swipe to Confirm Order)
+                       </span>
+                       <SlideButton
+                         labelText={`Slide to Place Order (₹${totals.finalAmount})`}
+                         externalStatus={
+                           isProcessingPay 
+                             ? "loading" 
+                             : isOrderPlaced 
+                               ? "success" 
+                               : "idle"
+                         }
+                         onDragComplete={() => {
+                           const canCheckout = fullName && phoneNumber && streetAddress && currentUser;
+                           if (!canCheckout) {
+                             notificationService.send(
+                               "Missing Details",
+                               "Please fill in all checkout fields (Full Name, Phone number, and Street Address) before sliding to confirm."
+                             );
+                             return;
+                           }
+                           handleCheckoutSubmit({ preventDefault: () => {} } as any);
+                         }}
+                       />
+                     </div>
 
                   </form>
                 </div>
