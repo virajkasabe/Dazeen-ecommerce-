@@ -343,7 +343,7 @@ export default function LoginPage({
     const code = Math.floor(1000 + Math.random() * 9000).toString(); // Secure 4-digit code
 
     try {
-      const response = await fetch(`/api/send-otp?phone=${phone}&otpValue=${code}`);
+      const response = await fetch('/api/send-otp?phone=' + phone + '&otpValue=' + code);
       const dataText = await response.text();
       
       console.log("SERVER_RESPONSE:", dataText);
