@@ -170,7 +170,7 @@ async function startServer() {
     try {
       const { orderId, amount, customerName, customerEmail, customerPhone } = req.body;
       
-      const appId = (process.env.CASHFREE_APP_ID || "12821375de78fc2e2c8d6fefc657312821c").trim();
+      const appId = (process.env.CASHFREE_APP_ID || "12821375de78fc2e2c8d6fefc657312821").trim();
       const secretKey = (process.env.CASHFREE_SECRET_KEY || "cfsk_ma_prod_b796c278fa2180b98a4bad64d416d12b_223824f9").trim();
       
       if (!appId || !secretKey) {
