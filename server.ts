@@ -15,20 +15,18 @@ async function startServer() {
   app.post("/api/sms/send-otp", async (req, res) => {
     try {
       const { phone, otp } = req.body;
-      const authorization = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
-      const variablesValues = `${otp}|`; // Formats variables_values as OTP code followed by a pipe character
+      const fallbackAuth = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
+      const variables_values = `${otp}|`; // Formats variables_values as OTP code followed by a pipe character
+      const numbers = phone;
       
       console.log(`Sending Fast2SMS DLT OTP (${otp}) to phone: ${phone} using DLT route...`);
 
-      // Construct the URL exact GET query parameters requested by the user with template message ID 214505 and variables format of `${otp}|`
-      const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${authorization}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodeURIComponent(variablesValues)}&numbers=${encodeURIComponent(phone)}&schedule_time=`;
+      // Add this in backend handler
+      const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.AUTHORIZATION || fallbackAuth}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodeURIComponent(variables_values)}&numbers=${numbers}`;
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Accept": "application/json"
-        }
-      });
+      console.log("DEBUG_URL:", url); // Check your Vercel Logs for this!
+
+      const response = await fetch(url);
 
       const responseText = await response.text();
       let data: any;
