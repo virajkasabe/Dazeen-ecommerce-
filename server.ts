@@ -27,14 +27,29 @@ async function startServer() {
       return res.status(400).json({ success: false, error: "Missing phone or OTP value" });
     }
 
-    // Hardcoded check (temporary real key)
-    const authKey = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
-    const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodeURIComponent(formattedOtpValue)}&numbers=${phone}`;
+    const authKey = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
+
+    // URLSearchParams automatically handles variables_values encoding correctly
+    const params = new URLSearchParams({
+      authorization: authKey,
+      route: "dlt",
+      sender_id: "DAZEEN",
+      message: "214505",
+      variables_values: formattedOtpValue,
+      numbers: phone,
+      flash: "0",
+      language: "english"
+    });
+
+    const url = `https://www.fast2sms.com/dev/bulkV2?${params.toString()}`;
 
     console.log("DEBUG_URL:", url); // Check server logs for this!
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { "cache-control": "no-cache" }
+      });
       const data = await response.json();
       
       console.log("Fast2SMS API Response data:", data);
