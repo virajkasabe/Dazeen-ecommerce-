@@ -182,11 +182,46 @@ async function startServer() {
       
       // Determine if keys are sandbox or production based on secret key prefix
       const isProduction = secretKey.startsWith("cfsk_ma_prod_");
-      const url = isProduction 
+      const tokenUrl = isProduction 
+        ? "https://api.cashfree.com/pg/token" 
+        : "https://sandbox.cashfree.com/pg/token";
+      const orderUrl = isProduction 
         ? "https://api.cashfree.com/pg/orders" 
         : "https://sandbox.cashfree.com/pg/orders";
       
       console.log(`Initiating Cashfree order ${orderId} of ₹${amount}. Mode: ${isProduction ? "Production" : "Sandbox/Test"}`);
+
+      // 1. Pehle Token Request
+      console.log(`Getting token from ${tokenUrl}...`);
+      const tokenResponse = await fetch(tokenUrl, {
+        method: "POST",
+        headers: {
+          "x-client-id": appId,
+          "x-client-secret": secretKey,
+          "x-api-version": "2023-08-01"
+        }
+      });
+
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.json().catch(() => ({}));
+        console.error("Cashfree Token Request Failed:", errorData);
+        return res.status(200).json({
+          success: false,
+          error: errorData.message || "Failed to generate Cashfree authentication token",
+          details: errorData
+        });
+      }
+
+      const tokenJson = await tokenResponse.json() as { token?: string; [key: string]: any };
+      const token = tokenJson.token;
+      
+      if (!token) {
+        console.error("Token missing in response:", tokenJson);
+        return res.status(200).json({
+          success: false,
+          error: "Authentication token was empty or missing from Cashfree response."
+        });
+      }
 
       const requestBody = {
         order_id: orderId,
@@ -203,13 +238,14 @@ async function startServer() {
         }
       };
 
-      const response = await fetch(url, {
+      // 2. Ab is Token ko Header mein daal kar Order create karo
+      console.log(`Creating order at ${orderUrl}...`);
+      const response = await fetch(orderUrl, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "x-api-version": "2023-08-01",
-          "x-client-id": appId,
-          "x-client-secret": secretKey,
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify(requestBody),
       });
