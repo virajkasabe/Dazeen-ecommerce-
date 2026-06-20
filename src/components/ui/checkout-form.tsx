@@ -55,11 +55,10 @@ export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlace
   const [appliedPromo, setAppliedPromo] = React.useState<string | null>(null);
   const [promoError, setPromoError] = React.useState<string | null>(null);
 
-  // Payment Method State
-  const [paymentMethod, setPaymentMethod] = React.useState<"Card" | "UPI" | "COD">("Card");
-  const [cardName, setCardName] = React.useState("Vaidehi Deshmukh");
-  const [cardNumber, setCardNumber] = React.useState("**** **** **** 1234");
-  const [upiId, setUpiId] = React.useState("vaidehi@oksbi");
+  // Payment Method State - strictly 2 choices: "ONLINE" and "COD"
+  const [paymentMethod, setPaymentMethod] = React.useState<"ONLINE" | "COD">("ONLINE");
+  const [error, setError] = React.useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = React.useState<boolean>(false);
 
   // Order Submission State
   const [isSubmitted, setIsSubmitted] = React.useState(false);
@@ -130,24 +129,53 @@ export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlace
   };
 
   // Submit Order / Place Order
-  const handlePlaceOrder = () => {
-    // Collect order payload
+  const handlePlaceOrder = async () => {
+    setError(null);
+
+    // Standard Client-side Form Validation
+    if (!fullName.trim()) {
+      setError("Please fill in your Full Name.");
+      return;
+    }
+    if (!phoneNumber || phoneNumber.trim().length < 10) {
+      setError("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (!pincode || pincode.trim().length !== 6) {
+      setError("Please enter a valid 6-digit pin code.");
+      return;
+    }
+    if (!addressLine1.trim()) {
+      setError("Please complete your Flat/House details.");
+      return;
+    }
+    if (!addressLine2.trim()) {
+      setError("Please complete your Area/Colony/Street details.");
+      return;
+    }
+    if (!city.trim()) {
+      setError("Please specify Town/City.");
+      return;
+    }
+    if (!state.trim()) {
+      setError("Please specify/select State.");
+      return;
+    }
+
+    const uniqueOrderId = `DAZ-${Math.floor(100000 + Math.random() * 900000)}`;
+
     const finalOrder = {
-      id: `DAZ-${Math.floor(100000 + Math.random() * 900000)}`,
+      id: uniqueOrderId,
       userId: currentUser?.uid || "guest_uid",
-      userEmail: currentUser?.email || "guest@dazeen.com",
-      fullName,
-      phoneNumber,
+      userEmail: currentUser?.email || `${phoneNumber.trim()}@dazeen.com`,
+      fullName: fullName.trim(),
+      phoneNumber: phoneNumber.trim(),
       streetAddress: `${addressLine1}, ${addressLine2}`,
       city,
       state,
       pinCode: pincode,
       paymentMethod,
-      paymentDetails: paymentMethod === "Card" 
-        ? `Credit Card ending in ${cardNumber.slice(-4)}` 
-        : paymentMethod === "UPI" 
-        ? `UPI ID: ${upiId}` 
-        : "Cash on Delivery",
+      paymentDetails: paymentMethod === "ONLINE" ? "Cashfree Payments Secure Gateway" : "Cash on Delivery",
       items: activeItems,
       pricing: {
         itemTotal,
@@ -156,21 +184,13 @@ export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlace
         taxes,
         grandTotal,
       },
-      status: "Confirmed",
+      status: "Processing",
       createdAt: new Date().toISOString(),
     };
 
-    setPlacedOrderDetails(finalOrder);
-    setIsSubmitted(true);
-
-    // Save order database securely in localStorage to keep Order Tracking Page synced
-    const existingOrders = localStorage.getItem("dazeen_placed_orders_v1");
-    const parsedOrders = existingOrders ? JSON.parse(existingOrders) : [];
-    
-    // Add item values for full fields matching tracked order payload structure
+    // Construct full tracking payload matching tracking standards
     const fullOrderPayload = {
       ...finalOrder,
-      streetAddress: `${addressLine1}, ${addressLine2}`,
       totalPrice: grandTotal,
       addressType: "Home",
       items: activeItems.map(item => ({
@@ -185,44 +205,117 @@ export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlace
       }))
     };
 
-    localStorage.setItem("dazeen_placed_orders_v1", JSON.stringify([fullOrderPayload, ...parsedOrders]));
+    if (paymentMethod === "ONLINE") {
+      setIsProcessing(true);
+      try {
+        const response = await fetch("/api/cashfree/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: uniqueOrderId,
+            amount: grandTotal,
+            customerName: fullName.trim(),
+            customerEmail: currentUser?.email || `${phoneNumber.trim()}@dazeen.com`,
+            customerPhone: phoneNumber.trim(),
+          }),
+        });
 
-    // Auto-save address and details to user profile if logged in
-    if (currentUser) {
-      const updatedUser = {
-        ...currentUser,
-        displayName: fullName.trim(),
-        address: `${addressLine1}, ${addressLine2}`.trim(),
-        phoneNumber: phoneNumber.trim(),
-      };
-      localStorage.setItem("dazeen_current_user", JSON.stringify(updatedUser));
+        const serverResult = await response.json();
 
-      const savedUsersList = localStorage.getItem("dazeen_local_users_v1");
-      if (savedUsersList) {
-        try {
-          const uList = JSON.parse(savedUsersList);
-          const updatedList = uList.map((u: any) => {
-            if (u.uid === currentUser.uid) {
-              return {
-                ...u,
-                displayName: updatedUser.displayName,
-                address: updatedUser.address,
-                phone: updatedUser.phoneNumber,
-                phoneNumber: updatedUser.phoneNumber,
-              };
-            }
-            return u;
+        if (serverResult.success === true && (window as any).Cashfree) {
+          // Store order in localStorage before redirecting so the history is preserved
+          const existingOrders = localStorage.getItem("dazeen_placed_orders_v1");
+          const parsedOrders = existingOrders ? JSON.parse(existingOrders) : [];
+          localStorage.setItem("dazeen_placed_orders_v1", JSON.stringify([fullOrderPayload, ...parsedOrders]));
+
+          // Sync credentials
+          if (currentUser) {
+            const updatedUser = {
+              ...currentUser,
+              displayName: fullName.trim(),
+              address: `${addressLine1}, ${addressLine2}`.trim(),
+              phoneNumber: phoneNumber.trim(),
+            };
+            localStorage.setItem("dazeen_current_user", JSON.stringify(updatedUser));
+          }
+
+          const isProd = serverResult.isProduction || String(serverResult.order_status || "").length > 0;
+          const cashfree = (window as any).Cashfree({ mode: isProd ? "production" : "sandbox" });
+          
+          setIsProcessing(false);
+
+          cashfree.checkout({
+            paymentSessionId: serverResult.payment_session_id,
+            returnUrl: `${window.location.origin}/?order_id=${uniqueOrderId}&payment_status=success`
           });
-          localStorage.setItem("dazeen_local_users_v1", JSON.stringify(updatedList));
-        } catch (e) {
-          console.error("Could not sync profile values", e);
+        } else {
+          const errMsg = serverResult.error || "Failed to initiate Cashfree order. Choose COD or retry.";
+          setError(`Cashfree Error: ${errMsg}`);
+          setIsProcessing(false);
+          console.error("Cashfree order creation rejected:", serverResult);
+        }
+      } catch (err: any) {
+        console.error("Cashfree gateway crash:", err);
+        setError(`Local API connection failed: ${err?.message || err}`);
+        setIsProcessing(false);
+      }
+    } else {
+      // COD directly places order
+      setIsProcessing(true);
+      
+      // Save order database securely in localStorage to keep Order Tracking Page synced
+      const existingOrders = localStorage.getItem("dazeen_placed_orders_v1");
+      const parsedOrders = existingOrders ? JSON.parse(existingOrders) : [];
+      localStorage.setItem("dazeen_placed_orders_v1", JSON.stringify([fullOrderPayload, ...parsedOrders]));
+
+      // Auto-save address and details to user profile if logged in
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
+          displayName: fullName.trim(),
+          address: `${addressLine1}, ${addressLine2}`.trim(),
+          phoneNumber: phoneNumber.trim(),
+        };
+        localStorage.setItem("dazeen_current_user", JSON.stringify(updatedUser));
+
+        const savedUsersList = localStorage.getItem("dazeen_local_users_v1");
+        if (savedUsersList) {
+          try {
+            const uList = JSON.parse(savedUsersList);
+            const updatedList = uList.map((u: any) => {
+              if (u.uid === currentUser.uid) {
+                return {
+                  ...u,
+                  displayName: updatedUser.displayName,
+                  address: updatedUser.address,
+                  phone: updatedUser.phoneNumber,
+                  phoneNumber: updatedUser.phoneNumber,
+                };
+              }
+              return u;
+            });
+            localStorage.setItem("dazeen_local_users_v1", JSON.stringify(updatedList));
+          } catch (e) {
+            console.error("Could not sync profile values", e);
+          }
         }
       }
-    }
 
-    // Execute callback if passed
-    if (onOrderPlaced) {
-      onOrderPlaced(fullOrderPayload);
+      // Notify user about their fresh coffee order placement
+      const { notificationService } = await import("../../utils/notifications");
+      notificationService.send(
+        "COD Order Placed successfully! 📦🚚",
+        `Your order ${uniqueOrderId} is logged! Savor the wait, cash of ₹${grandTotal.toFixed(2)} is payable on delivery.`
+      );
+
+      setTimeout(() => {
+        setIsProcessing(false);
+        setPlacedOrderDetails(fullOrderPayload);
+        setIsSubmitted(true);
+        if (onOrderPlaced) {
+          onOrderPlaced(fullOrderPayload);
+        }
+      }, 1500);
     }
   };
 
@@ -430,35 +523,20 @@ export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlace
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              {/* Card option */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Online Payment via Cashfree */}
               <button
                 type="button"
-                onClick={() => setPaymentMethod("Card")}
+                onClick={() => setPaymentMethod("ONLINE")}
                 className={cn(
-                  "py-2 px-1 rounded-xl text-[11px] font-bold tracking-wide uppercase transition-all flex flex-col items-center gap-1.5 cursor-pointer border",
-                  paymentMethod === "Card"
+                  "py-3 px-2 rounded-xl text-[11px] font-bold tracking-wide uppercase transition-all flex flex-col items-center gap-1.5 cursor-pointer border",
+                  paymentMethod === "ONLINE"
                     ? "bg-[#B4942B]/10 text-[#B4942B] border-[#B4942B]/50 font-extrabold shadow-sm"
                     : "bg-stone-50 dark:bg-stone-900/40 text-stone-500 border-stone-200/50 dark:border-stone-800 hover:bg-stone-100/50"
                 )}
               >
                 <CreditCard className="w-4 h-4 text-inherit" />
-                <span>Debit Card</span>
-              </button>
-
-              {/* UPI option */}
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("UPI")}
-                className={cn(
-                  "py-2 px-1 rounded-xl text-[11px] font-bold tracking-wide uppercase transition-all flex flex-col items-center gap-1.5 cursor-pointer border",
-                  paymentMethod === "UPI"
-                    ? "bg-[#B4942B]/10 text-[#B4942B] border-[#B4942B]/50 font-extrabold shadow-sm"
-                    : "bg-stone-50 dark:bg-stone-900/40 text-stone-500 border-stone-200/50 dark:border-stone-800 hover:bg-stone-100/50"
-                )}
-              >
-                <Landmark className="w-4 h-4 text-inherit" />
-                <span>UPI / GPay</span>
+                <span>Online Payment</span>
               </button>
 
               {/* COD option */}
@@ -466,7 +544,7 @@ export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlace
                 type="button"
                 onClick={() => setPaymentMethod("COD")}
                 className={cn(
-                  "py-2 px-1 rounded-xl text-[11px] font-bold tracking-wide uppercase transition-all flex flex-col items-center gap-1.5 cursor-pointer border",
+                  "py-3 px-2 rounded-xl text-[11px] font-bold tracking-wide uppercase transition-all flex flex-col items-center gap-1.5 cursor-pointer border",
                   paymentMethod === "COD"
                     ? "bg-[#B4942B]/10 text-[#B4942B] border-[#B4942B]/50 font-extrabold shadow-sm"
                     : "bg-stone-50 dark:bg-stone-900/40 text-stone-500 border-stone-200/50 dark:border-stone-800 hover:bg-stone-100/50"
@@ -478,39 +556,35 @@ export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlace
             </div>
 
             {/* Dynamic context inputs */}
-            <div className="mt-3 bg-stone-50/50 dark:bg-stone-900/30 p-3 rounded-xl border border-stone-100 dark:border-stone-800/80">
-              {paymentMethod === "Card" ? (
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="text-stone-500">Virtual Card selection:</span>
-                    <span className="font-semibold text-stone-800 dark:text-stone-200">Simulated Card #</span>
+            <div className="mt-3 bg-stone-50/50 dark:bg-stone-900/30 p-4 rounded-xl border border-stone-100 dark:border-stone-800/80">
+              {paymentMethod === "ONLINE" ? (
+                <div className="space-y-1.5 text-xs text-stone-600 dark:text-stone-400">
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                    <span>Cashfree Gateway Integrated</span>
                   </div>
-                  <Input 
-                    value={cardNumber} 
-                    onChange={(e) => setCardNumber(e.target.value)} 
-                    placeholder="Enter Card Number"
-                    className="h-8 rounded-lg text-xs font-mono"
-                  />
-                </div>
-              ) : paymentMethod === "UPI" ? (
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="text-stone-500">UPI Billing alias:</span>
-                    <span className="font-semibold text-[#B4942B]">Instant Pay</span>
-                  </div>
-                  <Input 
-                    value={upiId} 
-                    onChange={(e) => setUpiId(e.target.value)} 
-                    placeholder="e.g. vaidehi@oksbi"
-                    className="h-8 rounded-lg text-xs font-mono"
-                  />
+                  <p className="text-[11px] leading-relaxed">
+                    Pay securely using secure channels: Netbanking, Debit/Credit Card, UPI, WhatsApp, or Google Pay.
+                  </p>
                 </div>
               ) : (
-                <p className="text-[11px] text-stone-500 leading-normal">
-                  🚚 cash or UPI scanner payment code is payable to rider upon delivery.
-                </p>
+                <div className="space-y-1.5 text-xs text-stone-600 dark:text-stone-400">
+                  <div className="flex items-center gap-1.5 font-bold text-[#B4942B]">
+                    <span>📦 Standard Direct Dispatch</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed">
+                    Order places immediately. cash or mobile UPI QR scanner payment is payable to rider upon safe delivery.
+                  </p>
+                </div>
               )}
             </div>
+
+            {/* Error alerts display */}
+            {error && (
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-medium text-left leading-normal">
+                ⚠️ {error}
+              </div>
+            )}
           </div>
 
           <Separator className="bg-stone-100 dark:bg-stone-850" />
@@ -584,9 +658,10 @@ export default function CheckoutForm({ currentUser, cartItems = [], onOrderPlace
         </div>
         <Button 
           onClick={handlePlaceOrder}
-          className="px-6 h-10 rounded-xl bg-stone-900 hover:bg-stone-850 text-white dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-stone-950 text-xs font-bold uppercase tracking-wider cursor-pointer"
+          disabled={isProcessing}
+          className="px-6 h-10 rounded-xl bg-stone-900 hover:bg-stone-850 text-white dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-stone-950 text-xs font-bold uppercase tracking-wider cursor-pointer disabled:opacity-50"
         >
-          Place Order
+          {isProcessing ? "Processing..." : "Place Order"}
         </Button>
       </div>
     </div>

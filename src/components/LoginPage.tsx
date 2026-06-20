@@ -340,7 +340,7 @@ export default function LoginPage({
     }
 
     setLoading(true);
-    const code = Math.floor(1020 + Math.random() * 8900).toString(); // Secure 4-digit code
+    const code = Math.floor(1000 + Math.random() * 9000).toString(); // Secure 4-digit code
 
     try {
       const response = await fetch("/api/sms/send-otp", {
@@ -355,7 +355,7 @@ export default function LoginPage({
         setGeneratedOtp(code);
         setOtpSent(true);
         setOtp("");
-        setSuccessMsg(`OTP verified and sent successfully via Fast2SMS gateway to +91-${phone}.`);
+        setSuccessMsg("OTP sent successfully");
       } else {
         // Explicitly show error on screen and do not bypass to simulated mode
         setError(`Fast2SMS Gateway Error: ${serverResult.error || "Failed to transmit OTP."}`);

@@ -5,6 +5,7 @@ import { Product } from "../types";
 import { OrderTracking } from "./ui/order-tracking";
 import { OrderStatus } from "./ui/order-status-tracker";
 import { RatingInteraction } from "./ui/emoji-rating";
+import NotificationCenter from "./ui/notification-center";
 
 interface TrackingProps {
   currentUser: any;
@@ -332,6 +333,20 @@ Savor the rich complex aromas of our estates, sleep perfectly!
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Live simulated alerts */}
+          <div className="pt-6 border-t border-stone-200">
+            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#B4942B] font-extrabold block text-center mb-4">
+              📟 Active Status Alerts
+            </span>
+            <NotificationCenter
+              cardTitle="Real-time order alerts"
+              cardDescription={trackedOrder ? `Follow real-time logistics logs for ${trackedOrder.id}` : "Get instant push notifications at every roasting and dispatch stage of your premium pouch."}
+              notificationTitle="Dazeen Hub"
+              notificationDescription={trackedOrder ? `Your order is currently ${trackedOrder.status.toLowerCase()}!` : "You received a payment of ₹199.00 INR"}
+              notificationTime={trackedOrder ? "Just Now" : "REALTIME"}
+            />
           </div>
         </div>
 

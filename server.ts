@@ -15,33 +15,19 @@ async function startServer() {
   app.post("/api/sms/send-otp", async (req, res) => {
     try {
       const { phone, otp } = req.body;
-      const apiKey = (process.env.FAST2SMS_AUTH_KEY || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP").trim();
+      const authorization = "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
+      const variablesValues = `${otp}|`; // Formats variables_values as OTP code followed by a pipe character
+      
+      console.log(`Sending Fast2SMS DLT OTP (${otp}) to phone: ${phone} using DLT route...`);
 
-      if (!apiKey) {
-        return res.status(200).json({
-          success: false,
-          error: "Authorization failure: Fast2SMS API key is blank."
-        });
-      }
+      // Construct the URL exact GET query parameters requested by the user with template message ID 214505 and variables format of `${otp}|`
+      const url = `https://www.fast2sms.com/dev/bulkV2?authorization=${authorization}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodeURIComponent(variablesValues)}&numbers=${encodeURIComponent(phone)}&schedule_time=`;
 
-      console.log(`Sending Fast2SMS OTP (${otp}) to phone: ${phone}`);
-
-      // Fast2SMS bulkV2 parameters format:
-      // headers: "authorization": "API_KEY"
-      // body JSON: { "route": "otp", "variables_values": otp, "numbers": phone }
-      const payload = {
-        route: "otp",
-        variables_values: String(otp),
-        numbers: String(phone),
-      };
-
-      const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
-        method: "POST",
+      const response = await fetch(url, {
+        method: "GET",
         headers: {
-          "authorization": apiKey,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload),
+          "Accept": "application/json"
+        }
       });
 
       const data = await response.json();
@@ -74,8 +60,8 @@ async function startServer() {
     try {
       const { orderId, amount, customerName, customerEmail, customerPhone } = req.body;
       
-      const appId = (process.env.CASHFREE_APP_ID || "").trim();
-      const secretKey = (process.env.CASHFREE_SECRET_KEY || "").trim();
+      const appId = (process.env.CASHFREE_APP_ID || "12821375de78fc2e2c8d6fefc657312821c").trim();
+      const secretKey = (process.env.CASHFREE_SECRET_KEY || "cfsk_ma_prod_b796c278fa2180b98a4bad64d416d12b_223824f9").trim();
       
       if (!appId || !secretKey) {
         return res.status(200).json({
@@ -89,7 +75,7 @@ async function startServer() {
       const url = isProduction 
         ? "https://api.cashfree.com/pg/orders" 
         : "https://sandbox.cashfree.com/pg/orders";
-
+      
       console.log(`Initiating Cashfree order ${orderId} of ₹${amount}. Mode: ${isProduction ? "Production" : "Sandbox/Test"}`);
 
       const requestBody = {
@@ -131,6 +117,7 @@ async function startServer() {
 
       res.json({
         success: true,
+        isProduction,
         ...data
       });
     } catch (err: any) {

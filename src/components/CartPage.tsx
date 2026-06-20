@@ -286,7 +286,7 @@ export default function CartPage({
       if (serverResult.success === true && window.Cashfree) {
         // Initialize real SDK and checkout
         try {
-          const isProd = String(serverResult.order_status || "").length > 0;
+          const isProd = serverResult.isProduction || String(serverResult.order_status || "").length > 0;
           const cashfree = window.Cashfree({ mode: isProd ? "production" : "sandbox" });
           setIsProcessingPay(false);
           

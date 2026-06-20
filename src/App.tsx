@@ -125,6 +125,30 @@ export default function App() {
     localStorage.setItem("dazeen_cart_cache_v1", JSON.stringify(cart));
   }, [cart]);
 
+  // Handle Cashfree redirect queries securely & clean URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("order_id");
+    const paymentStatus = params.get("payment_status");
+    if (orderId && paymentStatus === "success") {
+      // Clear shopping cart
+      setCart([]);
+      
+      // Navigate to tracking
+      setCurrentView("tracking");
+      
+      // Trigger a beautiful payment notification!
+      notificationService.send(
+        "Payment Settled! 🎉💳",
+        `Your transaction for Order ${orderId} was approved! Dispatching fresh beans shortly.`
+      );
+
+      // Clean query parameters from address bar to prevent redundant resets or duplicates
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
+
   // Handle live global updates: sync cart item product objects with currently active stateful products
   useEffect(() => {
     let changed = false;
