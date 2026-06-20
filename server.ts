@@ -3,6 +3,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import axios from "axios";
+import https from "https";
 
 async function startServer() {
   const app = express();
@@ -104,22 +105,26 @@ async function startServer() {
     const { phone, otpValue } = req.query;
     const authKey = process.env.AUTHORIZATION || "14eYp2D6nfUcWLTyxmVtq97JaAzHbi3FjX8sGuvZElRdKoOCrkuyLcNgESHKsbtYhz1DrinmqpxoZTvP";
 
-    // 1. Template Variables ko encode karo (bina pipe ke)
-    const encodedVars = encodeURIComponent(otpValue as string || "");
-    
-    // 2. URL construct karo (bulkV3 endpoint)
-    const baseUrl = "https://www.fast2sms.com/dev/bulkV3";
-    const query = `authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${encodedVars}&numbers=${phone}`;
-    
-    const finalUrl = `${baseUrl}?${query}`;
-    
-    try {
-        const response = await fetch(finalUrl);
-        const data = await response.text();
-        res.status(200).send(data);
-    } catch (error: any) {
-        res.status(500).send(error.message || "Error");
-    }
+    const pathUrl = `/dev/bulkV2?authorization=${authKey}&route=dlt&sender_id=DAZEEN&message=214505&variables_values=${otpValue}&numbers=${phone}`;
+
+    const options = {
+        hostname: 'www.fast2sms.com',
+        port: 443,
+        path: pathUrl,
+        method: 'GET',
+        headers: {
+            'User-Agent': 'Mozilla/5.0' // Minimum possible headers
+        }
+    };
+
+    const request = https.request(options, (response) => {
+        let data = '';
+        response.on('data', (chunk) => { data += chunk; });
+        response.on('end', () => { res.send(data); });
+    });
+
+    request.on('error', (e) => { res.status(500).send(e.message); });
+    request.end();
   });
 
   // API Route for Cashfree order creation
