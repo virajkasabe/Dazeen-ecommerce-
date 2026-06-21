@@ -43,7 +43,17 @@ export default function TermsPage({ onBackToHome }: TermsPageProps) {
     onBackToHome();
   };
 
-  const [activeTab, setActiveTab] = useState<'terms' | 'privacy' | 'refund'>('terms');
+  const [activeTab, setActiveTab] = useState<'terms' | 'privacy' | 'refund'>(() => {
+    const saved = localStorage.getItem("dazeen_terms_active_tab");
+    if (saved === 'privacy' || saved === 'refund' || saved === 'terms') {
+      return saved;
+    }
+    return 'terms';
+  });
+
+  useEffect(() => {
+    localStorage.removeItem("dazeen_terms_active_tab");
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FAF6F0] selection:bg-[#C5A880]/30 text-stone-900 pb-24 md:pb-32 pt-28">

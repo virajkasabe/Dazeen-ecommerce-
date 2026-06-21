@@ -79,7 +79,7 @@ export const OrderStatus: React.FC<OrderStatusProps> = ({
         <div className="relative inline-block">
           <div className="absolute inset-x-0 bottom-1 h-3 bg-amber-500/10 blur-md rounded-full" />
           <img
-            src={illustrationUrl}
+            src={illustrationUrl || undefined}
             alt="Order Status Illustration"
             className="w-24 h-24 sm:w-28 sm:h-28 mx-auto object-contain relative z-10"
           />
@@ -100,7 +100,7 @@ export const OrderStatus: React.FC<OrderStatusProps> = ({
           <div className="flex items-center space-x-4">
             <div className="relative">
               <img
-                src={item.imageUrl}
+                src={item.imageUrl || undefined}
                 alt={item.name}
                 className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-stone-800 object-cover border border-stone-100 dark:border-stone-800"
               />

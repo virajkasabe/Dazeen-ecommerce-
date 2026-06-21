@@ -339,9 +339,8 @@ export function OTPVerification({
               transition={{ duration: 0.2 }}
             >
               {/* Send Details Info */}
-              <p className="text-center text-xs text-stone-300 mt-2 mb-8 leading-relaxed font-sans">
-                We've simulated a 4-digit secret code to
-                <br /> <span className="font-mono font-bold text-amber-400 tracking-wide text-sm">{emailOrPhone}</span>
+              <p className="text-center text-xs text-green-400 mt-2 mb-8 leading-relaxed font-sans font-medium">
+                OTP Sent successfully
               </p>
 
               {/* OTP Number Fields Grid */}

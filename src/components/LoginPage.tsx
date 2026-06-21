@@ -1096,7 +1096,7 @@ export default function LoginPage({
         {/* Change Cartoon Avatar Box */}
         <div className="p-3.5 border border-stone-200 rounded-2xl bg-stone-50/50 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src={profileAvatar} className="w-12 h-12 rounded-full border border-stone-200 shadow-sm bg-amber-50" />
+            <img src={profileAvatar || undefined} className="w-12 h-12 rounded-full border border-stone-200 shadow-sm bg-amber-50" />
             <div>
               <h4 className="text-xs font-extrabold text-[#12100E]">Profile Cartoon Avatar</h4>
               <p className="text-[10px] text-stone-500 mt-0.5">Click to roll a brand new adventurer character.</p>

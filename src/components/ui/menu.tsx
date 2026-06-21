@@ -74,7 +74,7 @@ export const UserProfileSidebar = React.forwardRef<HTMLDivElement, UserProfileSi
         {/* User Info Header */}
         <motion.div variants={itemVariants} className="flex items-center space-x-4 p-2 text-left">
           <img
-            src={user.avatarUrl}
+            src={user.avatarUrl || undefined}
             alt={`${user.name}'s avatar`}
             className="h-12 w-12 rounded-full object-cover border border-stone-200 shadow-sm bg-amber-50"
           />

@@ -6,6 +6,7 @@ import { CartItem } from "../types";
 import { LiquidButton } from "./ui/liquid-glass-button";
 import { BottomNavBar } from "./ui/bottom-nav-bar";
 import { MenuToggleIcon } from "./ui/menu-toggle-icon";
+import Switch from "./ui/switch";
 
 interface NavbarProps {
   cart: CartItem[];
@@ -15,8 +16,8 @@ interface NavbarProps {
   currentUser: any;
   isAdmin: boolean;
   onOpenLogin: () => void;
-  currentView: "main" | "login" | "tracking" | "admin" | "cart" | "terms";
-  onSetView: (v: "main" | "login" | "tracking" | "admin" | "cart" | "terms") => void;
+  currentView: "main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale";
+  onSetView: (v: "main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale") => void;
   onOpenContact?: () => void;
 }
 
@@ -96,6 +97,26 @@ export default function Navbar({
               <span className="ml-2.5 font-serif font-black text-stone-700 text-sm tracking-wide hidden sm:inline-block">Dazeen Coffee</span>
             </div>
 
+            {/* Middle Switch Container - always visible in the header */}
+            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-white/75 backdrop-blur-md border border-stone-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)] z-50 select-none">
+              <span className={`text-[10px] font-mono uppercase tracking-wider font-extrabold transition-colors ${currentView !== "wholesale" ? "text-stone-900" : "text-stone-400"}`}>
+                Retail
+              </span>
+              <Switch 
+                checked={currentView === "wholesale"}
+                onChange={(checked) => {
+                  if (checked) {
+                    onSetView("wholesale");
+                  } else {
+                    onSetView("main");
+                  }
+                }}
+              />
+              <span className={`text-[10px] font-mono uppercase tracking-wider font-black transition-colors flex items-center gap-1.5 ${currentView === "wholesale" ? "text-emerald-650" : "text-stone-500"}`}>
+                Wholesale <span className="bg-emerald-50 text-[8px] px-1.5 py-0.5 rounded text-emerald-700 font-extrabold hidden md:inline-block">Min 10 pkt / 1kg</span>
+              </span>
+            </div>
+
             {/* Desktop Navigation Links in the Center (Scroll anchors) */}
             <nav className="hidden md:flex items-center gap-7 lg:gap-9 z-50">
               {[
@@ -148,100 +169,181 @@ export default function Navbar({
         </div>
       </motion.header>
 
-      {/* 40% height Sliding Down Navigation Drawer */}
+      {/* Premium Apple-style sliding down navigation drawer menu (half page height, white background, black text) */}
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Backdrop layer */}
+            {/* Smooth Backdrop overlay */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 0.4 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               onClick={() => setMenuOpen(false)}
-              className="fixed inset-0 bg-stone-950/25 z-30 pointer-events-auto backdrop-blur-xs"
+              className="fixed inset-0 bg-stone-950/30 z-40 backdrop-blur-xs cursor-pointer"
             />
-            
-            {/* Sliding Panel */}
+
+            {/* Top-down sliding White Panel (approx half page height) */}
             <motion.div
-              id="sliding-hamburger-drawer"
+              id="top-sliding-apple-drawer"
               initial={{ y: "-100%" }}
               animate={{ y: 0 }}
               exit={{ y: "-100%" }}
-              transition={{ type: "spring", damping: 26, stiffness: 180 }}
-              className="fixed top-0 left-0 right-0 h-[42vh] min-h-[350px] bg-[#FAF6F0] border-b border-coffee-200/80 shadow-2xl z-40 pt-24 pb-6 px-6 sm:px-12 flex flex-col justify-between overflow-y-auto"
+              transition={{ type: "spring", damping: 28, stiffness: 220 }}
+              className="fixed top-0 left-0 right-0 h-[52vh] min-h-[460px] max-h-[580px] bg-white border-b border-stone-200/80 shadow-[0_15px_40px_rgba(0,0,0,0.06)] z-50 pt-24 pb-6 overflow-y-auto"
             >
-              {/* Grid content */}
-              <div className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                {/* Left side column: Primary navigational items */}
-                <div className="space-y-4">
-                  <span className="text-[10px] font-mono font-bold tracking-widest text-[#5E0ED7] uppercase block">
-                    Boutique Menu & Support
-                  </span>
-                  <div className="flex flex-col gap-3">
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onSetView("main");
-                        setTimeout(() => onNavigate("blends"), 100);
-                      }}
-                      className="flex items-center gap-2.5 text-stone-800 hover:text-[#5E0ED7] font-serif font-black text-lg tracking-tight text-left transition-colors cursor-pointer"
-                    >
-                      <Coffee className="w-4 h-4 text-[#5E0ED7]" />
-                      Explore Specialty Blends
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onSetView("terms");
-                      }}
-                      className="flex items-center gap-2.5 text-stone-800 hover:text-[#5E0ED7] font-serif font-black text-lg tracking-tight text-left transition-colors cursor-pointer"
-                    >
-                      <FileText className="w-4 h-4 text-emerald-600" />
-                      Terms & Sourcing Specifications
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        if (onOpenContact) {
-                          onOpenContact();
-                        }
-                      }}
-                      className="flex items-center gap-2.5 text-stone-800 hover:text-[#5E0ED7] font-serif font-black text-lg tracking-tight text-left transition-colors cursor-pointer"
-                    >
-                      <Mail className="w-4 h-4 text-amber-500" />
-                      Contact Us / Live Inquiry Support
-                    </button>
+              <div className="max-w-7xl mx-auto px-6 sm:px-12 w-full h-full flex flex-col justify-between">
+                
+                {/* Visual Header / Brand Label */}
+                <div className="flex items-center justify-between border-b border-stone-100 pb-3 mb-4 select-none">
+                  <div className="flex items-center text-stone-400">
+                    <div className="w-4 h-4 rounded-full border border-stone-200/50 flex items-center justify-center bg-stone-50 mr-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-stone-600" />
+                    </div>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.25em] font-extrabold text-stone-500">Boutique Directory</span>
                   </div>
+                  
+                  {/* Quick close button in panel */}
+                  <button 
+                    onClick={() => setMenuOpen(false)}
+                    className="text-[10px] font-mono font-black uppercase tracking-wider text-stone-400 hover:text-stone-900 transition-colors flex items-center gap-1 cursor-pointer bg-stone-50 px-3 py-1 rounded-full border border-stone-100"
+                  >
+                    <span>✕ Close</span>
+                  </button>
                 </div>
 
-                {/* Right side column: Brand statements or instant trust factors */}
-                <div className="p-5 bg-white/60 border border-coffee-200/40 rounded-2xl space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#5E0ED7] animate-pulse" />
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-stone-500">
-                      Quality Standards
+                {/* Primary Content Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start mb-6">
+                  {/* Left Column: Core Navigation Links */}
+                  <div className="space-y-4">
+                    <span className="text-[10px] font-mono font-black tracking-widest text-[#5E0ED7] uppercase block">
+                      Explore Dazeen Space
                     </span>
+                    <div className="flex flex-col gap-1">
+                      {[
+                        {
+                          label: "Home",
+                          desc: "Return to central estate presentation",
+                          icon: Home,
+                          action: () => {
+                            setMenuOpen(false);
+                            onSetView("main");
+                            onNavigate("hero");
+                          },
+                        },
+                        {
+                          label: "Shop Dazeen Blends",
+                          desc: "Browse certified pure filter roasts",
+                          icon: Coffee,
+                          action: () => {
+                            setMenuOpen(false);
+                            onSetView("main");
+                            setTimeout(() => onNavigate("blends"), 60);
+                          },
+                        },
+                        {
+                          label: "Our Story",
+                          desc: "Learn about our Western Ghats shade-grown family estates",
+                          icon: Compass,
+                          action: () => {
+                            setMenuOpen(false);
+                            localStorage.setItem("dazeen_terms_active_tab", "privacy");
+                            onSetView("terms");
+                          },
+                        },
+                      ].map((item, idx) => (
+                        <button
+                          key={idx}
+                          onClick={item.action}
+                          className="flex items-start gap-4 p-2.5 rounded-2xl hover:bg-stone-50 transition-all text-left group cursor-pointer"
+                        >
+                          <div className="w-10 h-10 rounded-2xl bg-stone-50 text-stone-800 flex items-center justify-center group-hover:bg-stone-900 group-hover:text-white transition-all duration-300">
+                            <item.icon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-sans font-extrabold text-stone-900 group-hover:text-[#5E0ED7] transition-colors">
+                              {item.label}
+                            </h4>
+                            <p className="text-[11px] text-stone-500 font-sans mt-0.5">
+                              {item.desc}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <h4 className="text-sm font-serif font-bold text-coffee-950">
-                    100% Sourced Organic Guarantee
-                  </h4>
-                  <p className="text-xs text-stone-600 leading-relaxed">
-                    Our Western Ghats estates shade-grow each coffee berry naturally. Filter processing is fully pure-water purified, with 0% chemical trace residues on test labs.
-                  </p>
-                  <p className="text-[10px] font-mono text-zinc-400">
-                    Pune, MH • Call: +91 98345 00977
-                  </p>
-                </div>
-              </div>
 
-              {/* Minimalist lower edge bar */}
-              <div className="max-w-7xl mx-auto w-full border-t border-coffee-200/50 pt-4 flex justify-between items-center text-[10px] uppercase font-mono tracking-widest text-stone-400">
-                <span>© 2026 Dazeen Specialty Filter Roasters</span>
-                <span className="flex items-center gap-1 text-emerald-600 font-bold">
-                  <Sparkles className="w-3.5 h-3.5" /> Handcrafted Purity
-                </span>
+                  {/* Right Column: Policies & Assistance */}
+                  <div className="space-y-4">
+                    <span className="text-[10px] font-mono font-black tracking-widest text-emerald-700 uppercase block">
+                      Policy & Sourcing Terms
+                    </span>
+                    <div className="flex flex-col gap-1">
+                      {[
+                        {
+                          label: "Terms & Sourcing Policy",
+                          desc: "Official boutique quality specifications and criteria",
+                          icon: FileText,
+                          action: () => {
+                            setMenuOpen(false);
+                            localStorage.setItem("dazeen_terms_active_tab", "terms");
+                            onSetView("terms");
+                          },
+                        },
+                        {
+                          label: "Refund Policy Safeguard",
+                          desc: "100% replacement / refund for wrong or spoiled packs",
+                          icon: ShieldCheck,
+                          action: () => {
+                            setMenuOpen(false);
+                            localStorage.setItem("dazeen_terms_active_tab", "refund");
+                            onSetView("terms");
+                          },
+                        },
+                        {
+                          label: "Contact Support Desk",
+                          desc: "Connect instantly with our Pune dispatchers or live support",
+                          icon: Mail,
+                          action: () => {
+                            setMenuOpen(false);
+                            if (onOpenContact) {
+                              onOpenContact();
+                            }
+                          },
+                        },
+                      ].map((item, idx) => (
+                        <button
+                          key={idx}
+                          onClick={item.action}
+                          className="flex items-start gap-4 p-2.5 rounded-2xl hover:bg-stone-50 transition-all text-left group cursor-pointer"
+                        >
+                          <div className="w-10 h-10 rounded-2xl bg-stone-50 text-stone-800 flex items-center justify-center group-hover:bg-stone-900 group-hover:text-white transition-all duration-300">
+                            <item.icon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-sans font-extrabold text-stone-900 group-hover:text-emerald-700 transition-colors">
+                              {item.label}
+                            </h4>
+                            <p className="text-[11px] text-stone-500 font-sans mt-0.5">
+                              {item.desc}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer block of sliding panel */}
+                <div className="border-t border-stone-100 pt-3 flex flex-col sm:flex-row justify-between items-center text-[10px] uppercase font-mono tracking-wider text-stone-400 gap-2">
+                  <span className="font-semibold text-center sm:text-left select-none">
+                    © 2026 Dazeen Specialty Filter Roasters • Pune, MH
+                  </span>
+                  <span className="flex items-center gap-1 text-emerald-600 font-extrabold select-none">
+                    <Sparkles className="w-3.5 h-3.5" /> Handcrafted Purity
+                  </span>
+                </div>
+
               </div>
             </motion.div>
           </>

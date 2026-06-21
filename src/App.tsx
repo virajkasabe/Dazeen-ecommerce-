@@ -24,6 +24,7 @@ import OrderTrackingPage from "./components/OrderTrackingPage";
 import AdminPanel from "./components/AdminPanel";
 import CartPage from "./components/CartPage";
 import TermsPage from "./components/TermsPage";
+import WholesalePage from "./components/WholesalePage";
 import ContactModal from "./components/ContactModal";
 import { Select, SelectOption } from "./components/ui/animated-select-1";
 
@@ -39,7 +40,7 @@ export default function App() {
     const savedAdmin = localStorage.getItem("dazeen_user_is_admin");
     return savedAdmin ? JSON.parse(savedAdmin) : false;
   });
-  const [currentView, setCurrentView] = useState<"main" | "login" | "tracking" | "admin" | "cart" | "terms">("main");
+  const [currentView, setCurrentView] = useState<"main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale">("main");
   const [showContactModal, setShowContactModal] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>(() => {
     const savedProds = localStorage.getItem("dazeen_products_cache_v1");
@@ -180,17 +181,17 @@ export default function App() {
   }, [products]);
 
   // Cart operations
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: Product, customQty: number = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
         return prev.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + customQty }
             : item
         );
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity: customQty }];
     });
   };
 
@@ -430,6 +431,13 @@ export default function App() {
         {currentView === "terms" && (
           <TermsPage
             onBackToHome={() => setCurrentView("main")}
+          />
+        )}
+
+        {currentView === "wholesale" && (
+          <WholesalePage
+            onBackToHome={() => setCurrentView("main")}
+            onAddToCart={handleAddToCart}
           />
         )}
 
