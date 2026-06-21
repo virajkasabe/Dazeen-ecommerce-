@@ -11,6 +11,18 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Enforce HSTS (Strict-Transport-Security) Header
+  app.use((req, res, next) => {
+    res.setHeader("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+    next();
+  });
+
+  // Serve robots.txt instantly
+  app.get("/robots.txt", (req, res) => {
+    res.type("text/plain");
+    res.send("User-agent: *\nAllow: /");
+  });
+
   // API Route for Fast2SMS OTP Senders
   app.post("/api/sms/send-otp", async (req, res) => {
     const { phone, otp, otpValue } = req.body;
