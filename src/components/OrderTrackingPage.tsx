@@ -6,6 +6,7 @@ import { OrderTracking } from "./ui/order-tracking";
 import { OrderStatus } from "./ui/order-status-tracker";
 import { RatingInteraction } from "./ui/emoji-rating";
 import NotificationCenter from "./ui/notification-center";
+import InvoiceModal from "./InvoiceModal";
 
 interface TrackingProps {
   currentUser: any;
@@ -19,6 +20,7 @@ export default function OrderTrackingPage({ currentUser, onOpenLogin }: Tracking
   const [loading, setLoading] = useState(false);
   const [errorRec, setErrorRec] = useState<string | null>(null);
   const [orderView, setOrderView] = useState<"status" | "timeline">("status");
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
   // Handler to set order status directly to Delivered/Complete
   const handleMarkAsDelivered = (orderId: string) => {
@@ -457,8 +459,8 @@ Savor the rich complex aromas of our estates, sleep perfectly!
                   </div>
                 )}
 
-                {/* Simulated Order Completion Action Block */}
-                {trackedOrder.status !== "Delivered" && trackedOrder.status !== "Cancelled" && (
+                {/* Simulated Order Completion Action Block - Only show when order is "Out for delivery" */}
+                {trackedOrder.status?.toLowerCase() === "out for delivery" && (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -559,15 +561,21 @@ Savor the rich complex aromas of our estates, sleep perfectly!
                 <div className="pt-3 flex flex-col sm:flex-row gap-3 items-center justify-between text-left border-t border-stone-100">
                   <div className="text-xs text-stone-500">
                     <p className="font-bold flex items-center gap-1"><FileText className="w-3.5 h-3.5 text-[#B4942B]" /> Need an official copy of this receipt?</p>
-                    <p className="text-[10px] text-stone-400">Contains GST breakdown, courier partner references, & sourcing data.</p>
+                    <p className="text-[10px] text-stone-400">Contains GST breakdown, GSTIN reference, and detailed description.</p>
                   </div>
                   <button
-                    onClick={() => handleDownloadInvoice(trackedOrder)}
-                    className="w-full sm:w-auto px-5 py-3 bg-stone-900 hover:bg-stone-850 text-white text-xs font-mono font-bold rounded-2xl flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all duration-200"
+                    onClick={() => setIsInvoiceOpen(true)}
+                    className="w-full sm:w-auto px-5 py-3 bg-[#4a2c2a] hover:bg-[#3d2422] text-white text-xs font-mono font-bold rounded-2xl flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all duration-200 shadow-sm shadow-[#4a2c2a]/10"
                   >
-                    <Download className="w-4.5 h-4.5 text-[#B4942B]" /> Download Invoice
+                    <Download className="w-4.5 h-4.5 text-white" /> Download / Print Invoice
                   </button>
                 </div>
+
+                <InvoiceModal
+                  isOpen={isInvoiceOpen}
+                  onClose={() => setIsInvoiceOpen(false)}
+                  order={trackedOrder}
+                />
 
               </motion.div>
             ) : (

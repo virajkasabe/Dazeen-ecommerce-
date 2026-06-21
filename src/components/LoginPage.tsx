@@ -9,6 +9,7 @@ import { SlideButton } from "./ui/slide-button";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "./ui/label";
 import { UserProfileSidebar } from "./ui/menu";
+import { OTPVerification } from "./ui/otp-input";
 import {
   Stepper,
   StepperContent,
@@ -1458,51 +1459,55 @@ export default function LoginPage({
                     </button>
                   </form>
                 ) : (
-                  <form onSubmit={handleVerifyOtp} className="space-y-6">
-                    <div className="relative z-0 w-full mb-6 group">
-                      <input
-                        type="text"
-                        id="floating_otp"
-                        required
-                        maxLength={4}
-                        placeholder=" "
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                        className="block py-2.5 px-0 w-full text-lg text-amber-300 bg-transparent border-0 border-b-2 border-stone-700 appearance-none focus:outline-none focus:ring-0 focus:border-amber-400 peer transition-all text-center font-mono tracking-widest"
-                      />
-                      <label
-                        htmlFor="floating_otp"
-                        className="absolute text-sm text-stone-300 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-amber-400 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6 flex items-center w-full justify-center"
-                      >
-                        <KeyRound className="inline-block mr-2 w-4 h-4" />
-                        4-Digit Verification Code
-                      </label>
-                    </div>
+                  <OTPVerification
+                    emailOrPhone={`+91 ${phone}`}
+                    expectedCode={generatedOtp}
+                    onVerifySuccess={() => {
+                      const users = getRegisteredUsers();
+                      let found = users.find(u => u.phone === phone);
 
-                    <div className="flex justify-between items-center text-[11px] pt-1 font-mono">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOtpSent(false);
-                          setGeneratedOtp(null);
-                          setError(null);
-                          setSuccessMsg(null);
-                        }}
-                        className="text-stone-400 hover:text-white hover:underline cursor-pointer"
-                      >
-                        ← Back to mobile entry
-                      </button>
-                    </div>
+                      if (!found) {
+                        found = {
+                          uid: `phone-${Date.now()}`,
+                          phone: phone,
+                          displayName: `User (${phone.slice(-4)})`,
+                          photoURL: null,
+                        };
+                      }
 
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="group w-full flex items-center justify-center py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold uppercase tracking-widest text-xs font-mono focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-stone-950 focus:ring-emerald-500 transition-all duration-300 cursor-pointer disabled:opacity-50"
-                    >
-                      {loading ? "Verifying Code..." : "Verify Mobile OTP"}
-                      <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
-                    </button>
-                  </form>
+                      const isUserAdmin = false;
+
+                      localStorage.setItem("dazeen_current_user", JSON.stringify(found));
+                      localStorage.setItem("dazeen_user_is_admin", JSON.stringify(isUserAdmin));
+
+                      onLoginSuccess(found, isUserAdmin);
+                      setSuccessMsg("Phone verification successful! 🎉☕");
+                    }}
+                    onResendCode={async () => {
+                      const code = Math.floor(1000 + Math.random() * 9000).toString();
+                      try {
+                        const response = await fetch('/api/send-otp?phone=' + phone + '&otpValue=' + code);
+                        const dataText = await response.text();
+                        let parsedData: any = {};
+                        try { parsedData = JSON.parse(dataText); } catch (e) {}
+
+                        if (parsedData.return === true || dataText.includes('"return":true') || dataText.includes("success")) {
+                          setGeneratedOtp(code);
+                          setSuccessMsg(`New OTP sent successfully!`);
+                        } else {
+                          setError(`Resend response: ${dataText || "Unresolvable server transmission check."}`);
+                        }
+                      } catch (err: any) {
+                        setError(`Failed to resend: ${err?.message || err}`);
+                      }
+                    }}
+                    onBackToEntry={() => {
+                      setOtpSent(false);
+                      setGeneratedOtp(null);
+                      setError(null);
+                      setSuccessMsg(null);
+                    }}
+                  />
                 )}
               </div>
             )}
