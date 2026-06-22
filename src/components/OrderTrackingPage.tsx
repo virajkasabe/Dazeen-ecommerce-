@@ -4,7 +4,7 @@ import { Search, MapPin, Calendar, Clock, ShoppingBag, ArrowRight, Truck, Packag
 import { Product } from "../types";
 import { OrderTracking } from "./ui/order-tracking";
 import { OrderStatus } from "./ui/order-status-tracker";
-import { RatingInteraction } from "./ui/emoji-rating";
+import FeedbackSlider from "./ui/feedback-slider";
 import NotificationCenter from "./ui/notification-center";
 import InvoiceModal from "./InvoiceModal";
 
@@ -487,39 +487,22 @@ Savor the rich complex aromas of our estates, sleep perfectly!
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="p-6 bg-amber-50/30 rounded-3xl border border-amber-200/40 text-center space-y-4 shadow-3xs"
+                    className="overflow-hidden rounded-3xl border border-stone-200/50 text-center shadow-md bg-stone-900"
                   >
-                    <div className="space-y-1">
-                      <span className="text-[9px] uppercase font-mono tracking-widest text-[#B4942B] font-black block">
-                        AUTHENTIC COFFEE FEEDBACK
-                      </span>
-                      <h4 className="text-base sm:text-lg font-serif font-black text-stone-900">
-                        How was your Shanti Brew Experience?
-                      </h4>
-                      <p className="text-[11px] sm:text-xs text-stone-600 max-w-sm mx-auto">
-                        Your honest feedback feeds our craftsmanship. Let us know how you liked our 100% natural, caffeine-free decaf beans!
-                      </p>
-                    </div>
+                    <FeedbackSlider
+                      className="min-h-[440px] w-full"
+                      title="How was your Shanti Brew experience?"
+                      onFeedbackChange={(rating) => handleRatingSubmit(trackedOrder.id, rating)}
+                    />
 
-                    <div className="flex flex-col items-center justify-center py-2.5">
-                      <RatingInteraction
-                        onChange={(rating) => handleRatingSubmit(trackedOrder.id, rating)}
-                        className="py-1"
-                      />
-                    </div>
-
-                    {trackedOrder.rating ? (
+                    {trackedOrder.rating && (
                       <motion.div
                         initial={{ opacity: 0, y: 5 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-xs text-emerald-700 font-bold font-mono tracking-wide bg-emerald-50/50 py-1.5 px-3 rounded-full inline-flex items-center gap-1.5 mx-auto"
+                        className="w-full text-center py-4 bg-emerald-950/80 text-emerald-300 text-xs font-bold font-mono tracking-wide border-t border-emerald-900"
                       >
-                        <span>✓ Thank you for rating us {trackedOrder.rating}/5 stars! Enjoy your premium brew.</span>
+                        <span>✓ Thank you for rating us {trackedOrder.rating} stars! Enjoy your premium brew.</span>
                       </motion.div>
-                    ) : (
-                      <p className="text-[10px] text-stone-400 font-mono tracking-wider italic">
-                        Select an emoji above to submit your rating.
-                      </p>
                     )}
                   </motion.div>
                 )}

@@ -88,7 +88,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 {
                   icon: MapPin,
                   label: 'Address HQ',
-                  value: 'Pune, Maharashtra, India',
+                  value: 'Kurkumbh, backside of Bank of Maharashtra, Daund, Pune, Maharashtra',
                   className: 'col-span-1 md:col-span-2 lg:col-span-1',
                 }
               ]}

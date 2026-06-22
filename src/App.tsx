@@ -27,6 +27,7 @@ import TermsPage from "./components/TermsPage";
 import WholesalePage from "./components/WholesalePage";
 import ContactModal from "./components/ContactModal";
 import { Select, SelectOption } from "./components/ui/animated-select-1";
+import FlowArtDefaultDemo from "./components/ui/story-scroll-demo";
 
 import { notificationService } from "./utils/notifications";
 
@@ -40,7 +41,7 @@ export default function App() {
     const savedAdmin = localStorage.getItem("dazeen_user_is_admin");
     return savedAdmin ? JSON.parse(savedAdmin) : false;
   });
-  const [currentView, setCurrentView] = useState<"main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale">("main");
+  const [currentView, setCurrentView] = useState<"main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale" | "story">("main");
   const [showContactModal, setShowContactModal] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>(() => {
     const savedProds = localStorage.getItem("dazeen_products_cache_v1");
@@ -438,6 +439,12 @@ export default function App() {
           <WholesalePage
             onBackToHome={() => setCurrentView("main")}
             onAddToCart={handleAddToCart}
+          />
+        )}
+
+        {currentView === "story" && (
+          <FlowArtDefaultDemo
+            onBackToHome={() => setCurrentView("main")}
           />
         )}
 

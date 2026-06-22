@@ -16,8 +16,8 @@ interface NavbarProps {
   currentUser: any;
   isAdmin: boolean;
   onOpenLogin: () => void;
-  currentView: "main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale";
-  onSetView: (v: "main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale") => void;
+  currentView: "main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale" | "story";
+  onSetView: (v: "main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale" | "story") => void;
   onOpenContact?: () => void;
 }
 
@@ -78,7 +78,7 @@ export default function Navbar({
         initial={{ y: 0, opacity: 1 }}
         animate={{ y: isNavbarVisible ? 0 : -100, opacity: isNavbarVisible ? 1 : 0 }}
         transition={{ type: "spring", stiffness: 220, damping: 25 }}
-        className="sticky top-0 z-50 bg-transparent transition-all duration-300"
+        className="sticky top-0 z-[60] bg-transparent transition-all duration-300"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
@@ -173,14 +173,13 @@ export default function Navbar({
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Smooth Backdrop overlay */}
+            {/* Smooth Backdrop overlay - Click to close disabled */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.4 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              onClick={() => setMenuOpen(false)}
-              className="fixed inset-0 bg-stone-950/30 z-40 backdrop-blur-xs cursor-pointer"
+              className="fixed inset-0 bg-stone-950/30 z-40 backdrop-blur-xs"
             />
 
             {/* Top-down sliding White Panel (approx half page height) */}
@@ -202,14 +201,6 @@ export default function Navbar({
                     </div>
                     <span className="font-mono text-[9px] uppercase tracking-[0.25em] font-extrabold text-stone-500">Boutique Directory</span>
                   </div>
-                  
-                  {/* Quick close button in panel */}
-                  <button 
-                    onClick={() => setMenuOpen(false)}
-                    className="text-[10px] font-mono font-black uppercase tracking-wider text-stone-400 hover:text-stone-900 transition-colors flex items-center gap-1 cursor-pointer bg-stone-50 px-3 py-1 rounded-full border border-stone-100"
-                  >
-                    <span>✕ Close</span>
-                  </button>
                 </div>
 
                 {/* Primary Content Grid */}
@@ -247,8 +238,7 @@ export default function Navbar({
                           icon: Compass,
                           action: () => {
                             setMenuOpen(false);
-                            localStorage.setItem("dazeen_terms_active_tab", "privacy");
-                            onSetView("terms");
+                            onSetView("story");
                           },
                         },
                       ].map((item, idx) => (
@@ -376,7 +366,7 @@ export default function Navbar({
               icon: ShoppingCart,
               onClick: (e) => {
                 e.stopPropagation();
-                onSetView("cart");
+                onOpenCart();
               },
               badge: totalItems > 0 ? (
                 <span className="absolute -top-1.5 -right-2 bg-amber-400 text-stone-950 text-[8px] font-black h-4 w-4 rounded-full flex items-center justify-center font-mono ring-1 ring-white leading-none shadow-sm">

@@ -4,6 +4,7 @@ import { X, Trash2, Plus, Minus, Ticket, CreditCard, Sparkles, MapPin, Truck, Ch
 import { CartItem } from "../types";
 import { SlideButton } from "./ui/slide-button";
 import { notificationService } from "../utils/notifications";
+import FeedbackSlider from "./ui/feedback-slider";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -55,9 +56,9 @@ export default function CartDrawer({
   const [isProcessingPay, setIsProcessingPay] = useState<boolean>(false);
   const [orderId, setOrderId] = useState<string>("");
 
-  // Save profile and checkout animation states
   const [saveToProfileOption, setSaveToProfileOption] = useState<boolean>(true);
   const [animPhase, setAnimPhase] = useState<"packing" | "checked" | "settled">("packing");
+  const [showPromptFeedback, setShowPromptFeedback] = useState<boolean>(false);
 
   // Automatically autofill shipping details from logged-in user profile
   useEffect(() => {
@@ -72,6 +73,7 @@ export default function CartDrawer({
   useEffect(() => {
     if (isOrderPlaced) {
       setAnimPhase("packing");
+      setShowPromptFeedback(false);
       
       // Phase 1 -> Phase 2 trigger after 2500ms
       const t1 = setTimeout(() => {
@@ -83,9 +85,15 @@ export default function CartDrawer({
         setAnimPhase("settled");
       }, 4000);
 
+      // Phase 3 -> Auto Show Feedback slider after 6500ms
+      const t3 = setTimeout(() => {
+        setShowPromptFeedback(true);
+      }, 6500);
+
       return () => {
         clearTimeout(t1);
         clearTimeout(t2);
+        clearTimeout(t3);
       };
     }
   }, [isOrderPlaced]);
@@ -103,12 +111,15 @@ export default function CartDrawer({
       }
     }
 
-    const shippingCharge = subtotal > 499 || subtotal === 0 ? 0 : 50;
-    const finalAmount = Math.max(0, subtotal - discount + shippingCharge);
+    const priceAfterDiscount = Math.max(0, subtotal - discount);
+    const gstAmount = Math.round(priceAfterDiscount * 0.05);
+    const shippingCharge = priceAfterDiscount > 499 || subtotal === 0 ? 0 : 50;
+    const finalAmount = priceAfterDiscount + gstAmount + shippingCharge;
 
     return {
       subtotal,
       discount,
+      gstAmount,
       shippingCharge,
       finalAmount,
     };
@@ -359,7 +370,7 @@ export default function CartDrawer({
                   )}
 
                   {/* Phase 3: Settled State (Tick flied up, details sequentially appear without boxes!) */}
-                  {animPhase === "settled" && (
+                  {animPhase === "settled" && !showPromptFeedback && (
                     <div className="w-full flex-grow flex flex-col justify-start text-left space-y-6 pt-2 animate-fade-in">
                       
                       {/* Top Header with Fly Up Check Flip Tick & Order ID */}
@@ -502,6 +513,43 @@ export default function CartDrawer({
                       </motion.div>
 
                     </div>
+                  )}
+
+                  {animPhase === "settled" && showPromptFeedback && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 60 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="w-full flex-grow flex flex-col justify-center items-center py-4"
+                    >
+                      <FeedbackSlider
+                        className="rounded-3xl border border-coffee-200/50 bg-stone-900 text-white min-h-[440px] w-full"
+                        title="How was your checkout experience?"
+                        onFeedbackChange={(rating) => {
+                          const existingOrders = localStorage.getItem("dazeen_placed_orders_v1");
+                          if (existingOrders) {
+                            try {
+                              const parsed = JSON.parse(existingOrders);
+                              if (parsed && parsed.length > 0) {
+                                parsed[0].checkoutRating = rating;
+                                localStorage.setItem("dazeen_placed_orders_v1", JSON.stringify(parsed));
+                              }
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }
+                          notificationService.send("Feedback Received! ❤️", "Thank you for rating our checkout experience!");
+                          setTimeout(() => {
+                            handleCloseClear();
+                          }, 1500);
+                        }}
+                      />
+                      <button
+                        onClick={handleCloseClear}
+                        className="mt-6 text-xs font-mono font-bold text-coffee-500 hover:text-coffee-700 underline cursor-pointer"
+                      >
+                        Skip & Return to Boutique
+                      </button>
+                    </motion.div>
                   )}
 
                 </div>
@@ -874,6 +922,11 @@ export default function CartDrawer({
                               `₹${totals.shippingCharge}`
                             )}
                           </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <span className="text-coffee-600">Standard Levy (5% GST):</span>
+                          <span className="font-mono font-medium text-coffee-950">₹{totals.gstAmount}</span>
                         </div>
 
                         <div className="flex justify-between border-t border-coffee-100 pt-2.5 text-sm">
