@@ -31,21 +31,45 @@ import FlowArtDefaultDemo from "./components/ui/story-scroll-demo";
 
 import { notificationService } from "./utils/notifications";
 
+const safeGetItem = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.error("Error reading from localStorage:", error);
+    return null;
+  }
+};
+
+const safeParse = <T,>(value: string | null, fallback: T): T => {
+  if (value === null) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch (error) {
+    console.error("Error parsing JSON:", error);
+    return fallback;
+  }
+};
+
+const safeSetItem = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.error("Error writing to localStorage:", error);
+  }
+};
+
 export default function App() {
   // Authentication & View Routing State
   const [currentUser, setCurrentUser] = useState<any>(() => {
-    const saved = localStorage.getItem("dazeen_current_user");
-    return saved ? JSON.parse(saved) : null;
+    return safeParse(safeGetItem("dazeen_current_user"), null);
   });
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-    const savedAdmin = localStorage.getItem("dazeen_user_is_admin");
-    return savedAdmin ? JSON.parse(savedAdmin) : false;
+    return safeParse(safeGetItem("dazeen_user_is_admin"), false);
   });
   const [currentView, setCurrentView] = useState<"main" | "login" | "tracking" | "admin" | "cart" | "terms" | "wholesale" | "story">("main");
   const [showContactModal, setShowContactModal] = useState<boolean>(false);
   const [products, setProducts] = useState<Product[]>(() => {
-    const savedProds = localStorage.getItem("dazeen_products_cache_v1");
-    return savedProds ? JSON.parse(savedProds) : PRODUCTS;
+    return safeParse(safeGetItem("dazeen_products_cache_v1"), PRODUCTS);
   });
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState<boolean>(false);
@@ -61,7 +85,7 @@ export default function App() {
 
   useEffect(() => {
     // Check if user has already made a decision, else prompt with a pretty banner
-    const hasPrompted = localStorage.getItem("dazeen_prompted_push");
+    const hasPrompted = safeGetItem("dazeen_prompted_push");
     if (!hasPrompted && notifPermission !== "granted") {
       const timer = setTimeout(() => {
         setShowPermissionBanner(true);
@@ -80,7 +104,7 @@ export default function App() {
   }, []);
 
   const handleRequestPush = async () => {
-    localStorage.setItem("dazeen_prompted_push", "true");
+    safeSetItem("dazeen_prompted_push", "true");
     setShowPermissionBanner(false);
     
     const granted = await notificationService.requestPermission();
@@ -93,26 +117,18 @@ export default function App() {
   };
 
   const [heroImages, setHeroImages] = useState<any[]>(() => {
-    const saved = localStorage.getItem("dazeen_hero_images_v1");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    return [
+    const defaultHeroImages = [
       { src: "https://kommodo.ai/i/jLktjgtoIAYIfU0kG88j", bg: "#F4845F", panel: "#F79B7F" },
       { src: "https://kommodo.ai/i/VJoWZ2NV2Ot6pkP0uheV", bg: "#6BBF7A", panel: "#85CC92" },
       { src: "https://kommodo.ai/i/jLktjgtoIAYIfU0kG88j", bg: "#F4845F", panel: "#F79B7F" },
       { src: "https://kommodo.ai/i/VJoWZ2NV2Ot6pkP0uheV", bg: "#6BBF7A", panel: "#85CC92" },
     ];
+    return safeParse(safeGetItem("dazeen_hero_images_v1"), defaultHeroImages);
   });
 
   // Cart State connected to LocalStorage for offline persistence
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem("dazeen_cart_cache_v1");
-    return saved ? JSON.parse(saved) : [];
+    return safeParse(safeGetItem("dazeen_cart_cache_v1"), []);
   });
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<string>("hero");
@@ -124,7 +140,7 @@ export default function App() {
 
   // Sync cart with localStorage
   useEffect(() => {
-    localStorage.setItem("dazeen_cart_cache_v1", JSON.stringify(cart));
+    safeSetItem("dazeen_cart_cache_v1", JSON.stringify(cart));
   }, [cart]);
 
   // Handle Cashfree redirect queries securely & clean URL
@@ -510,7 +526,7 @@ export default function App() {
             <div className="flex gap-2 justify-end mt-1">
               <button
                 onClick={() => {
-                  localStorage.setItem("dazeen_prompted_push", "true");
+                  safeSetItem("dazeen_prompted_push", "true");
                   setShowPermissionBanner(false);
                 }}
                 className="px-3.5 py-1.5 text-xs text-stone-500 hover:text-stone-850 font-bold bg-stone-50 rounded-lg cursor-pointer"
