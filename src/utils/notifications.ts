@@ -31,7 +31,7 @@ class NotificationSystem {
   private marketingIntervalId: any = null;
 
   constructor() {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && "Notification" in window) {
       this.permitted = Notification.permission === "granted";
     }
   }
