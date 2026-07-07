@@ -89,7 +89,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
   const wholesalePacketTotal = Math.round(retailPacketValue * (1 - discountRate));
   const wholesalePerPacketPrice = Math.round(selectedBlend.price * (1 - discountRate));
 
-  // Bulk weight is priced per kg (Retail is usually 1 packet of 250g = Retail equivalent weight is ₹450 / 250g = ₹1800 per kg)
+  // Bulk weight is priced per kg (Retail is usually 1 packet of 100g = Retail equivalent weight is ₹450 / 100g = ₹4500 per kg)
   // Let's price Wholesale loose beans/powder per kg:
   // 1 - 9 kg: ₹1300 per kg
   // 10 - 24 kg: ₹1150 per kg
@@ -104,7 +104,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
 
   const currentBulkPerKgPrice = getBulkPricePerKg(bulkKg);
   const wholesaleBulkTotal = Math.round(bulkKg * currentBulkPerKgPrice);
-  const retailBulkValue = Math.round(bulkKg * (selectedBlend.price * 4)); // approx retail per kg equivalence
+  const retailBulkValue = Math.round(bulkKg * (selectedBlend.price * 10)); // approx retail per kg equivalence
 
   const activeTotal = wholesaleType === "packets" ? wholesalePacketTotal : wholesaleBulkTotal;
   const originalTotalValue = wholesaleType === "packets" ? retailPacketValue : retailBulkValue;
@@ -112,7 +112,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
 
   // Shipping dynamic computation
   const isPincodeValid = /^\d{6}$/.test(pincode.trim());
-  const totalWeightInKg = wholesaleType === "packets" ? (packetsCount * 0.25) : bulkKg;
+  const totalWeightInKg = wholesaleType === "packets" ? (packetsCount * 0.10) : bulkKg;
   const identifiedZone = isPincodeValid ? getZone(pincode.trim()) : null;
   const shippingCharge = isPincodeValid ? calculateShippingCost(totalWeightInKg, pincode.trim()) : 0;
   const wholesaleGst = Math.round(activeTotal * 0.05);
@@ -131,7 +131,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
       name: wholesaleName,
       price: wholesaleType === "packets" ? wholesalePerPacketPrice : currentBulkPerKgPrice, // Set correct unit price
       tagline: `Wholesale Direct Estate dispatch • Zone: ${identifiedZone} • PIN: ${pincode}`,
-      description: `Wholesale standard order batch. Type: ${wholesaleType === "packets" ? "Pre-packed 250g retail packets" : "Sealed double-wall barrier wholesale sack containing roasted coffee beans"} (Weight: ${totalWeightInKg}kg)`
+      description: `Wholesale standard order batch. Type: ${wholesaleType === "packets" ? "Pre-packed 100g retail packets" : "Sealed double-wall barrier wholesale sack containing roasted coffee beans"} (Weight: ${totalWeightInKg}kg)`
     };
 
     const cartAddQuantity = wholesaleType === "packets" ? packetsCount : bulkKg;
@@ -280,7 +280,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
                   <Package className={`w-5 h-5 mx-auto mb-2 ${wholesaleType === "packets" ? "text-[#a3e635]" : "text-stone-500"}`} />
                   <h4 className="text-xs font-black uppercase tracking-wider">Retail Packets</h4>
                   <p className={`text-[9px] mt-1 ${wholesaleType === "packets" ? "text-stone-300" : "text-stone-400"}`}>
-                    Min 10 Pre-packaged packs (250g)
+                    Min 10 Pre-packaged packs (100g)
                   </p>
                 </button>
 
@@ -318,10 +318,10 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
                     <div>
                       <span className="block text-[9px] font-mono text-stone-400 uppercase tracking-widest font-black">Order Size</span>
                       <p className="text-2xl font-black font-mono text-stone-900 mt-1">
-                        {packetsCount} <span className="text-xs text-stone-400 font-normal">Packets (250g each)</span>
+                        {packetsCount} <span className="text-xs text-stone-400 font-normal">Packets (100g each)</span>
                       </p>
                       <span className="text-[10px] text-emerald-600 block leading-tight mt-0.5 font-bold">
-                        Total net volume: {(packetsCount * 0.25).toFixed(1)}kg
+                        Total net volume: {(packetsCount * 0.10).toFixed(1)}kg
                       </span>
                     </div>
 
@@ -347,7 +347,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
                     <input 
                       type="range"
                       min="10"
-                      max="200"
+                      max="250"
                       step="5"
                       value={packetsCount}
                       onChange={(e) => setPacketsCount(parseInt(e.target.value))}
@@ -358,7 +358,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
                       <span>25 packs</span>
                       <span>50 packs</span>
                       <span>100 packs</span>
-                      <span>Max: 200 packs</span>
+                      <span>Max: 250 packs</span>
                     </div>
                   </div>
 
@@ -549,7 +549,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
                   <span className="text-[9px] font-mono text-stone-500 uppercase tracking-widest block select-none">Quantity Structure</span>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-sm font-sans font-extrabold text-white">
-                      {wholesaleType === "packets" ? `${packetsCount} Packets of 250g` : `${bulkKg} Kilograms (kg)`}
+                      {wholesaleType === "packets" ? `${packetsCount} Packets of 100g` : `${bulkKg} Kilograms (kg)`}
                     </span>
                     <span className="text-xs font-mono text-emerald-400 font-extrabold">
                       {wholesaleType === "packets" ? `${Math.round(discountRate * 100)}% Volume Off` : "Bulk Loose Rate"}
