@@ -61,7 +61,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
   const [wholesaleType, setWholesaleType] = useState<"packets" | "bulk">("packets");
   
   // Quantities
-  const [packetsCount, setPacketsCount] = useState<number>(10); // Min 10
+  const [packetsCount, setPacketsCount] = useState<number>(5); // Min 5
   const [bulkKg, setBulkKg] = useState<number>(5); // Min 1kg range 1-100
 
   // Pin Code entry state
@@ -81,7 +81,8 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
     if (count >= 100) return 0.42;
     if (count >= 50) return 0.35;
     if (count >= 25) return 0.28;
-    return 0.20;
+    if (count >= 10) return 0.20;
+    return 0;
   };
 
   const discountRate = getPacketDiscount(packetsCount);
@@ -280,7 +281,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
                   <Package className={`w-5 h-5 mx-auto mb-2 ${wholesaleType === "packets" ? "text-[#a3e635]" : "text-stone-500"}`} />
                   <h4 className="text-xs font-black uppercase tracking-wider">Retail Packets</h4>
                   <p className={`text-[9px] mt-1 ${wholesaleType === "packets" ? "text-stone-300" : "text-stone-400"}`}>
-                    Min 10 Pre-packaged packs (100g)
+                    Min 5 Pre-packaged packs (100g)
                   </p>
                 </button>
 
@@ -327,8 +328,8 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
 
                     <div className="flex items-center gap-2">
                       <button 
-                        disabled={packetsCount <= 10}
-                        onClick={() => setPacketsCount(prev => Math.max(10, prev - 5))}
+                        disabled={packetsCount <= 5}
+                        onClick={() => setPacketsCount(prev => Math.max(5, prev - 5))}
                         className="w-10 h-10 rounded-xl border border-stone-250 flex items-center justify-center hover:bg-stone-50 hover:border-stone-400 transition-colors cursor-pointer group active:scale-95 disabled:hover:bg-white disabled:opacity-40"
                       >
                         <Minus className="w-4 h-4 text-stone-600 group-hover:text-stone-950" />
@@ -346,7 +347,7 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
                   <div className="space-y-1">
                     <input 
                       type="range"
-                      min="10"
+                      min="5"
                       max="250"
                       step="5"
                       value={packetsCount}
@@ -354,10 +355,11 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
                       className="w-full h-1.5 bg-stone-100 rounded-lg appearance-none cursor-pointer accent-[#5E0ED7]"
                     />
                     <div className="flex justify-between font-mono text-[9px] text-stone-400">
-                      <span>Min: 10 packs</span>
-                      <span>25 packs</span>
+                      <span>Min: 5 packs</span>
                       <span>50 packs</span>
                       <span>100 packs</span>
+                      <span>150 packs</span>
+                      <span>200 packs</span>
                       <span>Max: 250 packs</span>
                     </div>
                   </div>
