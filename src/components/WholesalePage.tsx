@@ -356,10 +356,6 @@ export default function WholesalePage({ onBackToHome, onAddToCart }: WholesalePa
                     />
                     <div className="flex justify-between font-mono text-[9px] text-stone-400">
                       <span>Min: 5 packs</span>
-                      <span>50 packs</span>
-                      <span>100 packs</span>
-                      <span>150 packs</span>
-                      <span>200 packs</span>
                       <span>Max: 250 packs</span>
                     </div>
                   </div>
