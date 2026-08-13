@@ -24,7 +24,7 @@ import OrderTrackingPage from "./components/OrderTrackingPage";
 import AdminPanel from "./components/AdminPanel";
 import CartPage from "./components/CartPage";
 import TermsPage from "./components/TermsPage";
-import WholesalePage from "./components/WholesalePage";
+import BlueTeaPage from "./components/BlueTeaPage";
 import ContactModal from "./components/ContactModal";
 import { Select, SelectOption } from "./components/ui/animated-select-1";
 import FlowArtDefaultDemo from "./components/ui/story-scroll-demo";
@@ -452,9 +452,10 @@ export default function App() {
         )}
 
         {currentView === "wholesale" && (
-          <WholesalePage
+          <BlueTeaPage
             onBackToHome={() => setCurrentView("main")}
             onAddToCart={handleAddToCart}
+            onGoToCart={() => setCurrentView("cart")}
           />
         )}
 

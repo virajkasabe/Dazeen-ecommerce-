@@ -112,8 +112,8 @@ export default function Navbar({
                   }
                 }}
               />
-              <span className={`text-[10px] font-mono uppercase tracking-wider font-black transition-colors flex items-center gap-1.5 ${currentView === "wholesale" ? "text-emerald-650" : "text-stone-500"}`}>
-                Wholesale <span className="bg-emerald-50 text-[8px] px-1.5 py-0.5 rounded text-emerald-700 font-extrabold hidden md:inline-block">Min 10 pkt / 1kg</span>
+              <span className={`text-[10px] font-mono uppercase tracking-wider font-black transition-colors flex items-center gap-1.5 ${currentView === "wholesale" ? "text-[#1D5FD1]" : "text-stone-500"}`}>
+                Blue Tea <span className="bg-[#1D5FD1]/10 text-[8px] px-1.5 py-0.5 rounded text-[#1D5FD1] font-extrabold hidden md:inline-block">100% Natural</span>
               </span>
             </div>
 
