@@ -58,10 +58,11 @@ const PRODUCT_HIGHLIGHTS: string[] = [
 ];
 
 const PREP_STEPS: { title: string; content: string }[] = [
-  { title: "Measure the flowers", content: "Take 5–7 dried Butterfly Pea Flowers." },
-  { title: "Add hot water", content: "Add them to a cup of hot water." },
-  { title: "Steep", content: "Steep for 5–7 minutes, letting the blue colour bloom fully." },
-  { title: "Strain & enjoy", content: "Strain and enjoy — hot or over ice." },
+  { title: "Add powder", content: "Add ½–1 teaspoon of Blue Tea Powder to 150–200 ml of hot water." },
+  { title: "Mix well", content: "Mix well until the powder is completely blended." },
+  { title: "Steep", content: "Let it steep for 2–3 minutes." },
+  { title: "Enjoy", content: "Enjoy it hot or chilled." },
+  { title: "Customise", content: "Add lemon or honey as per your taste." },
 ];
 
 export default function BlueTeaPage({ onBackToHome, onAddToCart, onGoToCart }: BlueTeaPageProps) {
@@ -330,10 +331,10 @@ export default function BlueTeaPage({ onBackToHome, onAddToCart, onGoToCart }: B
                   🍵 How to Prepare
                 </h3>
               </div>
-              <span className="text-[10px] font-mono text-coffee-400">5–7 min steep</span>
+              <span className="text-[10px] font-mono text-coffee-400">2–3 min steep</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {PREP_STEPS.map((step, idx) => (
                 <div key={step.title} className="flex flex-col gap-2">
                   <span className="w-6 h-6 rounded-full bg-[#1D5FD1] text-white font-mono text-xs font-bold flex items-center justify-center">
@@ -348,8 +349,7 @@ export default function BlueTeaPage({ onBackToHome, onAddToCart, onGoToCart }: B
             <div className="mt-6 p-3.5 rounded-2xl bg-[#1D5FD1]/[0.05] border border-[#1D5FD1]/15 text-[11px] leading-relaxed text-coffee-700 flex items-start gap-2.5">
               <span className="shrink-0 mt-0.5">💡</span>
               <p>
-                <strong>Tip:</strong> Add a few drops of lemon to naturally change the colour from
-                blue to purple.
+                <strong>Tip:</strong> Add a few drops of lemon for a refreshing flavour and a natural colour change.
               </p>
             </div>
           </div>
