@@ -14,6 +14,7 @@ import {
   Flower2,
   Timer,
   Ban,
+  MessageCircle,
 } from "lucide-react";
 import { Product } from "../types";
 
@@ -115,6 +116,20 @@ export default function BlueTeaPage({ onBackToHome, onAddToCart, onGoToCart }: B
             <span>Return to Retail Store</span>
           </button>
         </div>
+
+        {/* Coffee Cross-Promotion Strip */}
+        <button
+          onClick={onBackToHome}
+          className="group w-full flex items-center justify-between gap-3 bg-coffee-950 text-white rounded-2xl px-5 py-3.5 mb-8 cursor-pointer hover:bg-coffee-900 transition-colors"
+        >
+          <span className="flex items-center gap-2 text-xs sm:text-sm font-bold">
+            ☕ We also craft premium caffeine-free Coffee Blends
+          </span>
+          <span className="flex items-center gap-1.5 text-[#5B8FF0] font-mono text-[10px] sm:text-xs font-black uppercase tracking-wider group-hover:gap-2.5 transition-all shrink-0">
+            Explore Coffee
+            <span aria-hidden="true">→</span>
+          </span>
+        </button>
 
         {/* Added-to-cart banner */}
         <AnimatePresence>
@@ -291,6 +306,20 @@ export default function BlueTeaPage({ onBackToHome, onAddToCart, onGoToCart }: B
                   <span>Add to Cart</span>
                 </button>
               </div>
+
+              {/* WhatsApp order button */}
+              {/* TODO: replace with real WhatsApp number */}
+              <a
+                href={`https://wa.me/91XXXXXXXXXX?text=${encodeURIComponent(
+                  `Hi! I'd like to order Blue Tea (${selectedPack.size} pack) x${quantity} — Total ₹${selectedPack.price * quantity}`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full mt-3 py-3.5 px-4 text-xs sm:text-sm font-sans font-black uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white active:scale-[0.98] shadow-lg shadow-emerald-950/10 cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Order on WhatsApp</span>
+              </a>
             </div>
           </div>
         </div>

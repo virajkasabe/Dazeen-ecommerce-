@@ -328,6 +328,37 @@ export default function App() {
               onOpenLogin={() => setCurrentView("login")} 
             />
 
+        {/* Blue Tea Cross-Promotion Banner */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+          <button
+            onClick={() => setCurrentView("wholesale")}
+            className="w-full group flex flex-col sm:flex-row items-center gap-5 sm:gap-6 bg-white border border-coffee-200/70 hover:border-[#1D5FD1]/40 rounded-3xl p-5 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] transition-all cursor-pointer text-left"
+          >
+            <div className="w-full sm:w-24 h-32 sm:h-24 rounded-2xl overflow-hidden shrink-0 bg-coffee-100">
+              <img
+                src="https://images.unsplash.com/photo-1708455398647-9f79425512fa?auto=format&fit=crop&q=80&w=300"
+                alt="Blue Tea"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+            <div className="flex-grow">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-black uppercase tracking-widest text-[#1D5FD1] bg-[#1D5FD1]/[0.08] px-2.5 py-1 rounded-full mb-1.5">
+                🦋 New Arrival
+              </span>
+              <h3 className="text-lg sm:text-xl font-serif font-black text-coffee-950">
+                Also try our Blue Tea — Natural Blue Pea Flower Tea
+              </h3>
+              <p className="text-xs sm:text-sm text-coffee-500 mt-1">
+                Caffeine-free, antioxidant-rich herbal tea. Enjoy it hot or iced.
+              </p>
+            </div>
+            <div className="shrink-0 flex items-center gap-1.5 text-[#1D5FD1] font-mono text-xs font-black uppercase tracking-wider group-hover:gap-2.5 transition-all">
+              Explore Blue Tea
+              <span aria-hidden="true">→</span>
+            </div>
+          </button>
+        </div>
+
         {/* Dynamic Craft Products Area */}
         <section id="blends" className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           

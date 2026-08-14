@@ -100,7 +100,7 @@ export default function Navbar({
             {/* Middle Switch Container - always visible in the header */}
             <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-white/75 backdrop-blur-md border border-stone-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)] z-50 select-none">
               <span className={`text-[10px] font-mono uppercase tracking-wider font-extrabold transition-colors ${currentView !== "wholesale" ? "text-stone-900" : "text-stone-400"}`}>
-                Retail
+                Coffee
               </span>
               <Switch 
                 checked={currentView === "wholesale"}
